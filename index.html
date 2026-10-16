@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f6f2">
+<meta name="description" content="Экспериментальная страница интерактивной книги: чтение и самостоятельное исследование.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Интерактивная книга — пилотная статья">
+<meta property="og:description" content="Читать — значит задавать вопросы. Эксперимент с форматом книги.">
+<title>Пилотная статья — интерактивная книга</title>
+<style>
+:root{color-scheme:light;--bg:#f7f6f2;--ink:#252b2d;--muted:#6a7477;--line:#d9ddd9;--accent:#315e6d;--paper:#fff;--measure:690px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.78}
+header{padding:16px clamp(18px,4vw,50px);border-bottom:1px solid var(--line);font:13px/1.4 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header span{color:var(--ink)}main{width:min(calc(100% - 36px),var(--measure));margin:74px auto 110px}h1{font-size:clamp(35px,5vw,52px);line-height:1.15;letter-spacing:-.035em;font-weight:normal;margin:0 0 17px} .deck{font-size:22px;line-height:1.5;color:var(--muted);margin:0 0 42px}.meta{font:13px/1.5 system-ui,sans-serif;color:var(--muted);margin-bottom:46px}
+p{margin:0 0 1.25em}a{color:var(--accent);text-underline-offset:3px}a:hover{text-decoration-thickness:2px}
+.ai{vertical-align:middle;margin-left:4px;padding:2px 6px;border:1px solid #9eb4bb;color:var(--accent);background:transparent;border-radius:5px;cursor:pointer;font:600 10px/1.5 system-ui,sans-serif;letter-spacing:.03em}.ai:hover,.ai[aria-expanded=true]{background:#e7eeef}.ai:focus-visible,.close:focus-visible{outline:3px solid #78a5b5;outline-offset:3px}
+.note{margin:8px 0 28px;padding:20px 22px;border-left:2px solid var(--accent);background:#edf1f0;font:15px/1.7 system-ui,sans-serif}.note[hidden]{display:none}.note strong{font-weight:650}.note p{margin:8px 0 0}.close{border:0;background:none;color:var(--accent);padding:0;margin-top:12px;text-decoration:underline;cursor:pointer;font:inherit}
+footer{border-top:1px solid var(--line);padding-top:23px;margin-top:72px;color:var(--muted);font:13px/1.6 system-ui,sans-serif}
+@media(max-width:650px){body{font-size:18px;line-height:1.72}main{margin:43px auto 70px}.deck{font-size:19px}.meta{margin-bottom:34px}.note{padding:16px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header><span>Интерактивная книга</span> / Пилот</header>
+<main>
+<article>
+<h1>Текст, который задаёт вопросы</h1>
+<p class="deck">Временный заголовок и временный текст для проверки формы чтения.</p>
+<div class="meta">Экспериментальная публикация · версия 0.1</div>
+<p>Обычная статья не обязана объяснять всё. Она может последовательно излагать мысль, оставляя читателю возможность остановиться, усомниться и самостоятельно исследовать интересующий вопрос.</p>
+<p>Переходы и дополнительные пояснения нужны не каждому утверждению. Их стоит размещать только там, где они действительно открывают новую траекторию познания. <button class="ai" type="button" aria-expanded="false" aria-controls="note-1" aria-label="Открыть исследовательский вопрос">AI</button></p>
+<section class="note" id="note-1" hidden aria-label="Исследовательский вопрос">
+<strong>Вопрос для исследования</strong>
+<p>Как отличить полезную ссылку от перехода, который просто отвлекает от чтения? Какие критерии мог бы предложить читатель?</p>
+<p>Здесь впоследствии появится подготовленный сценарий исследования. Сейчас это только демонстрация элемента интерфейса: никакие сведения не отправляются внешним сервисам.</p>
+<button class="close" type="button">Свернуть</button>
+</section>
+<p>Читатель может продолжить чтение, не открывая никаких подсказок. Или воспользоваться обычной <a href="https://ru.wikipedia.org/wiki/Гипертекст" target="_blank" rel="noopener noreferrer">гиперссылкой</a> для перехода к самостоятельному источнику.</p>
+<p>Именно соотношение непрерывного чтения и добровольных ответвлений мы будем проверять на этой странице. Настоящий авторский текст заменит этот образец.</p>
+</article>
+<footer>Пилот интерактивной книги. Подготовленные исследовательские запросы и ответы ИИ в этой версии не подключены.</footer>
+</main>
+<script>
+const trigger=document.querySelector('.ai');const note=document.getElementById('note-1');
+function toggleNote(open){note.hidden=!open;trigger.setAttribute('aria-expanded',String(open));if(!open)trigger.focus({preventScroll:true})}
+trigger.addEventListener('click',()=>toggleNote(note.hidden));document.querySelector('.close').addEventListener('click',()=>toggleNote(false));
+</script>
+</body>
+</html>
