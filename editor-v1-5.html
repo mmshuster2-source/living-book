@@ -1,0 +1,139 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Редактор — Новые АЭС</title><style>
+:root{--bg:#f8f7f4;--ink:#262d31;--muted:#687477;--line:#dce0df;--blue:#335b68;--soft:#eaf0ef;--chosen:#edf1e2}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:var(--bg);font-family:system-ui,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.4;cursor:default}header{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:12px 20px;background:white;position:sticky;top:0;z-index:4}.brand{font-weight:650}.sub{color:var(--muted);font-size:12px}.controls{display:flex;flex-wrap:wrap;gap:7px}.btn{border:1px solid #bfc9c9;background:white;color:var(--ink);padding:7px 10px;border-radius:7px;font-size:13px}.btn.primary{background:var(--blue);color:white;border-color:var(--blue)}.layout{display:grid;grid-template-columns:240px minmax(360px,1fr) 290px;min-height:calc(100vh - 60px)}aside{padding:18px 14px;border-right:1px solid var(--line);position:sticky;top:62px;height:calc(100vh - 62px);overflow-y:auto;align-self:start;overscroll-behavior:contain}aside.right{border-left:1px solid var(--line);border-right:0}aside h2{font-size:13px;margin:0 0 14px}main{padding:36px clamp(22px,6vw,80px) 100px;max-width:1000px;width:100%;margin:auto}.article{font:19px/1.8 Georgia,'Times New Roman',serif}h1{font:normal 43px/1.18 Georgia,serif;margin:0 0 38px}.article h2{font:normal 30px/1.25 Georgia,serif;margin:44px 0 20px}.article p{margin:0 0 24px;padding:6px 10px;margin-left:-10px;border-left:3px solid transparent;border-radius:3px}.article p.marked{background:var(--chosen);border-color:#97aa84}.article p.inblock{border-color:#91b0bc}.article p:hover{background:#f0f2ee}.hint{font:12px/1.5 system-ui;color:var(--muted);margin:0 0 22px}.tree-row{display:block;text-align:left;width:100%;border:none;background:none;border-radius:6px;padding:8px;color:var(--ink);font-size:13px}.tree-row:hover,.tree-row.active{background:var(--soft)}.tree-child{padding-left:16px}.small{font-size:12px;color:var(--muted)}.box{background:white;border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:15px}.field{display:block;margin:12px 0;font-size:12px;color:var(--muted)}.field input,.field select,.field textarea{display:block;width:100%;margin-top:5px;border:1px solid #cbd4d3;border-radius:6px;padding:8px;color:var(--ink);background:white;font-size:13px}.field textarea{min-height:70px;resize:vertical}.check{display:inline-flex;align-items:center;gap:5px;font-size:12px}.pill{font-size:11px;background:var(--soft);padding:3px 6px;border-radius:4px;color:var(--blue)}.suggest{border-top:1px solid var(--line);padding:13px 0;font-size:13px}.suggest:first-child{border-top:0}.suggest p{font-size:12px;line-height:1.5;margin:7px 0}.actions{display:flex;flex-wrap:wrap;gap:5px}.actions button{font-size:12px}.msg{font-size:12px;line-height:1.5;color:var(--muted)}.notice{background:#fff5e5;padding:9px;border-radius:6px;font-size:12px;margin:10px 0}details summary{cursor:pointer}body:not(.show-blocks) .article p.inblock{border-color:transparent}body:not(.show-review) .article p.reviewed{box-shadow:none}.article p.reviewed{box-shadow:inset -3px 0 #bfad77}.mobile-head{display:none}@media(max-width:1050px){aside.right{position:static;height:auto;overflow:visible}.layout{grid-template-columns:185px minmax(330px,1fr)}aside.right{grid-column:1/-1;border-top:1px solid var(--line);border-left:0;display:grid;grid-template-columns:1fr 1fr;gap:18px}aside.right h2{grid-column:1/-1}}@media(max-width:720px){aside.left{position:static;height:auto;overflow:visible}header{position:static;align-items:flex-start;flex-direction:column}.layout{display:block}aside.left{border-right:0;border-bottom:1px solid var(--line)}aside.right{display:block}main{padding:25px 22px 65px}.article{font-size:18px}h1{font-size:36px}.article h2{font-size:26px}}
+main .selection-toolbar{position:sticky;top:58px;z-index:3;background:rgba(248,247,244,.98);border:1px solid var(--line);padding:10px 12px;border-radius:9px;margin-bottom:20px;box-shadow:0 3px 12px #00000010}.selection-toolbar .status{font-size:12px;color:var(--muted);margin:0 0 8px}.article p{cursor:pointer}.article p.marked{box-shadow:inset 0 0 0 1px #90a57e}.article p::selection{background:#c6d9cf}@media(max-width:720px){main .selection-toolbar{top:0}} body.editing-text .article p[contenteditable='true']{outline:1px dashed #74918a;background:#fff;cursor:text;min-height:2em}body.editing-text .article p[contenteditable='true']:focus{outline:2px solid #335b68}.text-edit-actions{position:sticky;top:136px;z-index:3;background:var(--bg);padding:10px;border:1px solid var(--line);border-radius:8px;margin:10px 0} </style></head><body class="show-blocks show-review"><header><div><div class="brand">Живая книга <span class="sub"> / авторский редактор · пилот</span></div><div id="saveState" class="sub">Локальная рабочая версия</div></div><div class="controls"><button class="btn" id="reset">Вернуть исходные данные</button><button class="btn" id="import">Импорт JSON</button><button class="btn primary" id="export">Экспорт JSON</button><input type="file" id="file" accept=".json,application/json" hidden></div></header>
+<div class="layout"><aside class="left"><h2>Дерево · версия 1</h2><div id="tree"></div><div class="box"><strong class="small">Слои отображения</strong><p><label class="check"><input type="checkbox" id="layerBlocks" checked> Границы блоков</label></p><p><label class="check"><input type="checkbox" id="layerReview" checked> Замечания</label></p></div><p class="msg">Это одно дерево. Его узлы пока соответствуют разделам статьи; смысловые блоки создаёт автор.</p></aside>
+<main><div class="selection-toolbar"><p class="status" id="selectStatus">Выбрано абзацев: 0. Щёлкни по тексту абзаца, чтобы отметить его; повторный щелчок снимает отметку.</p><div class="controls"><button id="create" class="btn primary" disabled>Создать блок из выделенного</button><button id="clear" class="btn" disabled>Снять выделение</button></div></div><div id="inlineEditActions" class="text-edit-actions" hidden><span class="small">Редактирование текста выбранного блока</span> <button class="btn primary" id="saveInlineText">Сохранить текст</button> <button class="btn" id="cancelInlineText">Отмена</button></div><article class="article" id="article"></article></main>
+<aside class="right"><div><h2>Паспорт выбранного блока</h2><div id="passport" class="box msg">Создайте блок или выберите его в дереве.</div><h2>Разметка</h2><div class="box msg">Пока границы блока проходят между абзацами. Внутриабзацные тезисы и значки появятся отдельным этапом.</div></div><div><h2>Предпубликационная ревизия</h2><div class="box"><p class="msg">Замечания — отдельные вклады. Решения автора сохраняются; исправления исходного текста в этой версии не производятся.</p><div id="reviews"></div></div></div></aside></div>
+<script id="seed" type="application/json">{
+  "schema": "living-book/article.v1",
+  "id": "article-new-npp",
+  "title": "6. Новые АЭС",
+  "source": "Авторский текст; исходная версия без правок",
+  "sections": [
+    {
+      "id": "6.1",
+      "title": "АЭС как компромисс"
+    },
+    {
+      "id": "6.2",
+      "title": "Какие АЭС нужны?"
+    },
+    {
+      "id": "6.3",
+      "title": "Малые модульные реакторы"
+    }
+  ],
+  "paragraphs": [
+    {
+      "id": "p-6-1-1",
+      "section": "6.1",
+      "text": "Сначала я назвал раздел \"Чем плохи старые АЭС\", но понял, что ответить на этот вопрос гораздо сложнее, чем кажется. Что такое \"старые\"? Это около 440 реакторов семи типов, из которых самый распространенный PWR (317 штук). В основе каждого типа лежат ключевые решения, отличающие его от остальных. FNR работает на быстрых нейтронах, теплоносителем служит натрий. В AGR нейтроны замедляет графит, а тепло отводит газ. В PWR быстрые нейтроны замедляются той же водой, что отводит тепло. Важно понимать, что ни тип не лучше другого в абсолютном смысле; это всегда компромисс между присущими ему преимуществами и недостатками. Например, Канду работает на природном уране, что сильно упрощает и удешевляет топливо. Расплата за это - необходимость применения тяжелой воды: она очень дорогая и сильно усложняет конструкцию."
+    },
+    {
+      "id": "p-6-1-2",
+      "section": "6.1",
+      "text": "PWR не \"лучший\", а наиболее приемлемый для уровня науки и техники, при котором создавалась индустрия. После ЧАЭС-4 она остановилось, затем продолжилось весьма... эээ... неравномерно. Сегодня АЭС снова в фокусе внимания, что породило гонки конструкторов под ожидания скачка спроса, на мой взгляд, весьма перегретые."
+    },
+    {
+      "id": "p-6-1-3",
+      "section": "6.1",
+      "text": "На сегодня стартовало под две сотни стартапов на большие и малые реакторы в широком диапазоне фантазии: от строгих и консервативных до невежественных фантазий и афер. Даже ко мне обращались аферисты с концепцией в виде набора лозунгов, ничем не подкрепленных технически."
+    },
+    {
+      "id": "p-6-1-4",
+      "section": "6.1",
+      "text": "Новые реакторы можно оценить по шкале инновационности. Слева - существующие, хорошо изученные конструкции, модернизированные с учетом опыта применения и улучшенного (но тоже хорошо отработанного) оборудования. Справа - конструкции, не имеющие аналогов: новые принципы, материалы, топливо, оборудование."
+    },
+    {
+      "id": "p-6-1-5",
+      "section": "6.1",
+      "text": "Условно, шкалу можно поделить на диапазоны: промышленный, инженерный, экспериментальный, концептуальный, спекулятивный. Чем \"левее\" по шкале - тем выше гарантии того, что реактор можно построить и эксплуатировать так, как он задуман. Но он получится лишь \"немного лучше\" тех, что уже есть. Напротив, ближе к \"правому\" краю находятся функциональные, безопасные, дешевые, быстрые в постройке - но одна беда: вряд ли они когда-либо будут построены. Вот и получается: чем большего мы хотим добиться - тем меньше шансов, что добъемся. Нужно уметь ставить правильные цели."
+    },
+    {
+      "id": "p-6-1-6",
+      "section": "6.1",
+      "text": "А может так быть, что существует волшебная таблетка? Да, может. Искусство конструктора способно породить прорывное решение. Но это все равно будет компромисс, полезные свойства и расплата за них. И в любом случае, время\\стоимость внедрения будет зависеть от места решения на шкале инноваций"
+    },
+    {
+      "id": "p-6-2-1",
+      "section": "6.2",
+      "text": "Это вытекает из основной формулы энергетики: нужна такая генерация, которая наиболее соответствуют характеру потребления. То есть, генератор АЭС должен следовать за изменением потребления. Может он это делать сейчас? Да, но с целым рядом оговорок: это возможно в ограниченных пределах, условиях и очень дорого: тем дороже, чем больше диапазон изменения. Способны ли так работать новые АЭС? Это требует изучения, но главный вопрос - нужно ли это и насколько. Нужно считать: скажем, комбинация АЭС+СЭС+ГЭС может обладать радикально лучшей гибкостью и себестоимостью киловатта, чем каждая по отдельности. Стало быть, не нужно изобретать особо гибкую АЭС (это точно будет дорого), достаточно сделать ее удобной для интеграции. А значит увеличить долю консервативных решений в конструкции."
+    },
+    {
+      "id": "p-6-2-2",
+      "section": "6.2",
+      "text": "Но и интеграции разные бывают. Скажем, газоохлаждаемые реакторы, благодаря высокой температуре газа, хорошо интегрируются с металлургией: высокий КПД получается потому, что часть энергии совершает работу, минуя цикл Карно. Вот и получается, что нужно искать не \"лучший тип АЭС\", а создать линейку АЭС из таких типов, которые лучше применять к тем или иным условиям и комбинациям. Скажем, ядерный опреснитель - прекрасный гибрид: производит электричество, а когда потребление падает - аккумулирует энергию в виде запаса опресненной воды в баках. Такое решение снимает проблему гибкости, а значит можно поставить что-то совсем дубовое и консервативное."
+    },
+    {
+      "id": "p-6-3-1",
+      "section": "6.3",
+      "text": "Это прекрасное направление с очевидными преимуществами, которые, правда, умудряются толковать превратно. Давайте разберем простыми словами:"
+    },
+    {
+      "id": "p-6-3-2",
+      "section": "6.3",
+      "text": "Малый реактор - такой, что пригоден в модели распределенной генерации. Он питает электричеством и\\или теплом объект или группу объектов, расположенных в непосредственной близости: городской квартал, предприятие, установку. Не требует обслуживания: один раз смонтировали, запустили, через 10 лет остановили, поменяли топливо и снова запустили. Несколько человек наблюдает за работой на всякий случай, да и то по интернет. Изредка приезжает сервис и все делает незаметно для потребителя. И при этом энергия стоит дешевле, чем если покупать ее в другом месте."
+    },
+    {
+      "id": "p-6-3-3",
+      "section": "6.3",
+      "text": "Это если в идеале и понятно, что так не будет. Сегодня \"малым\" считают реактор, мощностью до 300 МВт. Это колоссальная мощность, которую невозможно потребить локально. А значит такая АЭС должна работать на энергосистему и никакая это не распределенная генерация. Почему это решение выгодно?"
+    },
+    {
+      "id": "p-6-3-4",
+      "section": "6.3",
+      "text": "А что неясно? \"Левая шкала\": берем существующий реактор, уменьшаем в размерах и, модернизацией, прибираем все известные недостатки. Это самое дешевое решение из возможных. Мне тут нравится все, кроме того, что он совсем не \"малый\"."
+    },
+    {
+      "id": "p-6-3-5",
+      "section": "6.3",
+      "text": "Модульный реактор - это такой, который по частям можно обычным транспортом доставить на площадку и собрать без сварки и подгонки. Заменить \"строительство\" на \"сборку\". Выгода в том, что обеспечить качество на месте производства нескольких модулей несравненно проще, чем при монтаже множества элементов по месту: станки выполняют операции намного точнее, стабильней, быстрее и дешевле, чем люди. Строительство остается, но его объемы радикально снижаются."
+    },
+    {
+      "id": "p-6-3-6",
+      "section": "6.3",
+      "text": "При этом происходит усложнение - например, у реактора появляются фланцевые соединения. Производство становится несколько дороже - но это компенсируется за счет удешевления строительства (сейчас 20-30% стоимости АЭС) и уменьшения числа конструктивных элементов (не нужны трубопроводы)."
+    },
+    {
+      "id": "p-6-3-7",
+      "section": "6.3",
+      "text": "Также приятно, что в случае неприятностей с корпусом реактора, его можно заменить на новый. Это означает почти бесконечный срок службы АЭС и снижение рисков при использовании новых марок реакторной стали."
+    },
+    {
+      "id": "p-6-3-8",
+      "section": "6.3",
+      "text": "Какие родовые недостатки идеи малых модульных реакторов? Я таких не вижу. Однако, нет таких проблем, которые не смогли бы создать люди на ровном месте."
+    }
+  ],
+  "blocks": [],
+  "annotations": [],
+  "revision": 1
+}</script><script>
+'use strict';const seed=JSON.parse(document.getElementById('seed').textContent);const key='living-book-editor-v1';let data;try{data=JSON.parse(localStorage.getItem(key))||structuredClone(seed)}catch{data=structuredClone(seed)};
+let selected=new Set(),active=null,editingBoundaries=false,editingText=false;
+const reviewSeed=[{id:'r1',target:'p-6-1-1',type:'Проверка числа',text:'Проверить число действующих реакторов и дату среза: «около 440», 317 PWR.',state:'open'},{id:'r2',target:'p-6-1-4',type:'Развитие',text:'«Шкала инновационности» может стать самостоятельной статьёй или новым узлом дерева.',state:'open'},{id:'r3',target:'p-6-2-2',type:'Уточнение / провокация',text:'Фраза «минуя цикл Карно» допускает пояснение, запрос или отдельный блок.',state:'open'},{id:'r4',target:'p-6-3-5',type:'Терминология',text:'Определение модульности «без сварки и подгонки» — авторская трактовка; нужно явно различать её и отраслевые определения.',state:'open'}];
+if(!Array.isArray(data.blocks))data.blocks=[];if(!Array.isArray(data.placeholders))data.placeholders=[];if(!Array.isArray(data.annotations)||!data.annotations.length)data.annotations=structuredClone(reviewSeed);
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function save(){localStorage.setItem(key,JSON.stringify(data));$('saveState').textContent='Сохранено в этом браузере · '+new Date().toLocaleTimeString('ru-RU')}
+function render(){renderTree();renderArticle();renderPassport();renderReviews();}
+function renderTree(){let out='<button class="tree-row" data-top="1">▾ '+esc(data.title)+'</button>';for(const s of data.sections){out+='<button class="tree-row tree-child" data-sec="'+s.id+'">▾ '+esc(s.id+' '+s.title)+'</button>';for(const b of data.blocks.filter(b=>b.section===s.id)){out+='<button class="tree-row tree-child '+(active===b.id?'active':'')+'" data-block="'+esc(b.id)+'" style="padding-left:35px">◦ '+esc(b.name||b.id)+'</button>'}}$('tree').innerHTML=out;document.querySelector('[data-top]').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});document.querySelectorAll('[data-sec]').forEach(el=>el.onclick=()=>document.getElementById(el.dataset.sec)?.scrollIntoView({behavior:'smooth'}));document.querySelectorAll('[data-block]').forEach(el=>el.onclick=()=>{active=el.dataset.block;selected.clear();editingBoundaries=false;if(editingText)cancelInline();render();const b=data.blocks.find(b=>b.id===active);document.getElementById(b.paragraphIds[0])?.scrollIntoView({behavior:'smooth',block:'center'})})}
+function renderArticle(){const n=selected.size;const status=$('selectStatus');$('create').textContent=editingBoundaries?'Сохранить границы блока':'Создать блок из выделенного';status.textContent=editingBoundaries?'Редактирование границ '+active+': отмечено '+n+' абз. Выбери нужные соседние абзацы и сохрани.':n?'Выбрано абзацев: '+n+'. Выделенные абзацы подсвечены. Можно создать блок или снять выделение.':'Выбрано абзацев: 0. Щёлкни по тексту абзаца, чтобы отметить его; повторный щелчок снимает отметку.';$('create').disabled=!n;$('clear').disabled=!n;let out='<h1>'+esc(data.title)+'</h1>';for(const sec of data.sections){out+='<h2 id="'+esc(sec.id)+'">'+esc(sec.id+' '+sec.title)+'</h2>';for(const p of data.paragraphs.filter(p=>p.section===sec.id)){const inside=data.blocks.some(b=>b.paragraphIds.includes(p.id));const rev=data.annotations.some(a=>a.target===p.id&&a.state==='open');out+='<p id="'+esc(p.id)+'" class="'+(selected.has(p.id)?'marked ':'')+(inside?'inblock ':'')+(rev?'reviewed':'')+'" '+(editingText&&data.blocks.find(b=>b.id===active)?.paragraphIds.includes(p.id)?'contenteditable="true" spellcheck="true"':'')+' title="'+(editingText?'Редактирование текста':'Нажмите, чтобы отметить или снять отметку с абзаца')+'">'+esc(p.text)+'</p>'}}$('article').innerHTML=out;for(const el of document.querySelectorAll('.article p'))el.onclick=()=>{if(editingText)return;selected.has(el.id)?selected.delete(el.id):selected.add(el.id);renderArticle()}}
+function renderPassport(){const b=data.blocks.find(b=>b.id===active);if(!b){$('passport').innerHTML='Создайте блок или выберите его в дереве.';return}const fld=(label,name,value,type='text')=>'<label class="field">'+label+(type==='textarea'?'<textarea data-field="'+name+'">'+esc(value)+'</textarea>':type==='select'?'<select data-field="'+name+'">'+['черновик','на проверке','принят','опубликован'].map(s=>'<option '+(s===value?'selected':'')+'>'+s+'</option>').join('')+'</select>':'<input data-field="'+name+'" value="'+esc(value)+'">')+'</label>';
+$('passport').innerHTML='<strong>'+esc(b.id)+'</strong><p class="small">'+b.paragraphIds.length+' абз. · '+esc(b.section)+'</p>'+fld('Название','name',b.name)+fld('Краткое содержание','summary',b.summary,'textarea')+fld('Уровень абстракции (пока условный)','level',b.level)+fld('Статус','status',b.status,'select')+fld('Доверие / основания','trust',b.trust,'textarea')+fld('Теги через запятую','tags',b.tags)+'<p class="msg">Паспорт и текст статьи редактируются раздельно.</p><div class="actions"><button class="btn" id="editText">Редактировать текст блока</button><button class="btn" id="addParagraph">Добавить абзац</button></div><div id="textEditor"></div><div class="actions"><button class="btn" id="editBoundaries">Изменить границы</button><button class="btn" id="newPlaceholder">Детализировать — создать болванку</button></div><div id="placeholderList"></div><p><button class="btn" id="deleteBlock">Убрать разметку блока</button></p>';
+document.querySelectorAll('[data-field]').forEach(el=>el.addEventListener('change',()=>{b[el.dataset.field]=el.value;save();renderTree()}));
+$('editText').onclick=()=>{if(editingText)return;editingText=true;selected.clear();document.body.classList.add('editing-text');$('inlineEditActions').hidden=false;renderArticle();const first=$(b.paragraphIds[0]);first?.scrollIntoView({behavior:'smooth',block:'center'});first?.focus()};
+$('addParagraph').onclick=()=>{if(editingText)return alert('Сначала сохрани или отмени редактирование текста.');const tail=b.paragraphIds[b.paragraphIds.length-1];const pos=data.paragraphs.findIndex(p=>p.id===tail);if(pos<0)return alert('Последний абзац блока не найден');const id='p-added-'+Date.now()+'-'+Math.floor(Math.random()*10000);data.paragraphs.splice(pos+1,0,{id,section:b.section,text:'Новый абзац.'});b.paragraphIds.push(id);save();render();document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'center'})};
+$('editBoundaries').onclick=()=>{active=b.id;editingBoundaries=true;selected=new Set(b.paragraphIds);renderArticle();$('selectStatus').scrollIntoView({behavior:'smooth',block:'start'})};
+$('newPlaceholder').onclick=()=>{const title=prompt('Название будущего смыслового объекта','Типы атомных реакторов');if(!title||!title.trim())return;const intent=prompt('Что предполагается раскрыть? (можно оставить пустым)','');data.placeholders.push({id:'PH-'+String(Date.now()),parentBlockId:b.id,title:title.trim(),intent:intent||'',status:'болванка'});save();renderPassport()};
+const holders=data.placeholders.filter(x=>x.parentBlockId===b.id);$('placeholderList').innerHTML=holders.length?'<p class="small">Дочерние болванки</p>'+holders.map(x=>'<div class="box"><strong>'+esc(x.title)+'</strong><p class="small">'+esc(x.intent)+'</p><button class="btn" data-remove-placeholder="'+esc(x.id)+'">Удалить болванку</button></div>').join(''):'';
+document.querySelectorAll('[data-remove-placeholder]').forEach(el=>el.onclick=()=>{if(!confirm('Удалить болванку?'))return;data.placeholders=data.placeholders.filter(x=>x.id!==el.dataset.removePlaceholder);save();renderPassport()});
+$('deleteBlock').onclick=()=>{if(!confirm('Убрать только разметку блока? Текст статьи останется.'))return;data.blocks=data.blocks.filter(x=>x.id!==active);data.placeholders=data.placeholders.filter(x=>x.parentBlockId!==active);active=null;editingBoundaries=false;selected.clear();save();render()}}
+function renderReviews(){$('reviews').innerHTML=data.annotations.map(a=>'<div class="suggest"><span class="pill">'+esc(a.type)+'</span> <span class="small">'+esc(a.id)+'</span><p>'+esc(a.text)+'</p><p class="small">'+esc(a.target)+' · '+esc(a.state)+'</p><div class="actions"><button class="btn" data-jump="'+esc(a.target)+'">К фрагменту</button><button class="btn" data-resolve="'+esc(a.id)+'">'+(a.state==='open'?'Отработано':'Вернуть в работу')+'</button></div></div>').join('');document.querySelectorAll('[data-jump]').forEach(el=>el.onclick=()=>$(el.dataset.jump)?.scrollIntoView({behavior:'smooth',block:'center'}));document.querySelectorAll('[data-resolve]').forEach(el=>el.onclick=()=>{let a=data.annotations.find(x=>x.id===el.dataset.resolve);a.state=a.state==='open'?'resolved':'open';save();render()})}
+$('create').onclick=()=>{const arr=data.paragraphs.filter(p=>selected.has(p.id));if(!arr.length)return;if(new Set(arr.map(p=>p.section)).size!==1)return alert('Первый пилот: один блок — в пределах одного раздела');const ids=arr.map(p=>data.paragraphs.indexOf(p));if(Math.max(...ids)-Math.min(...ids)+1!==ids.length)return alert('Выберите соседние абзацы');if(arr.some(p=>data.blocks.some(b=>b.id!== (editingBoundaries?active:null)&&b.paragraphIds.includes(p.id))))return alert('Абзац уже входит в другой блок. Пока пересечения запрещены');if(editingBoundaries){const b=data.blocks.find(x=>x.id===active);if(!b){editingBoundaries=false;return alert('Блок не найден')}b.section=arr[0].section;b.paragraphIds=arr.map(p=>p.id);editingBoundaries=false;selected.clear();save();render();return}const id='BK-'+String(1+Math.max(0,...data.blocks.map(b=>Number(b.id.slice(3))||0))).padStart(3,'0');data.blocks.push({id,section:arr[0].section,paragraphIds:arr.map(p=>p.id),name:'Новый смысловой блок',summary:'',level:'',status:'черновик',trust:'',tags:''});active=id;selected.clear();save();render()};
+function cancelInline(){editingText=false;document.body.classList.remove('editing-text');$('inlineEditActions').hidden=true;renderArticle()}
+$('saveInlineText').onclick=()=>{if(!editingText)return;const b=data.blocks.find(x=>x.id===active);if(!b)return cancelInline();const els=b.paragraphIds.map(id=>$(id));if(els.some(el=>!el||!el.innerText.trim()))return alert('Пустой абзац нельзя сохранить.');for(let i=0;i<els.length;i++){const p=data.paragraphs.find(p=>p.id===b.paragraphIds[i]);p.text=els[i].innerText.trim()}editingText=false;document.body.classList.remove('editing-text');$('inlineEditActions').hidden=true;save();renderArticle()};$('cancelInlineText').onclick=cancelInline;
+$('clear').onclick=()=>{selected.clear();if(editingBoundaries)editingBoundaries=false;renderArticle()};$('layerBlocks').onchange=e=>document.body.classList.toggle('show-blocks',e.target.checked);$('layerReview').onchange=e=>document.body.classList.toggle('show-review',e.target.checked);
+$('export').onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='new-npp-working.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+$('import').onclick=()=>$('file').click();$('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o=JSON.parse(await f.text());if(o.schema!==seed.schema||!Array.isArray(o.paragraphs)||!Array.isArray(o.sections)||!Array.isArray(o.blocks))throw Error('Несовместимый формат');if(!confirm('Заменить текущую локальную рабочую версию импортируемой?'))return;if(editingText)cancelInline();data=o;selected.clear();active=null;editingBoundaries=false;if(!Array.isArray(data.placeholders))data.placeholders=[];save();render()}catch(err){alert('Импорт не выполнен: '+err.message)}e.target.value=''};
+$('reset').onclick=()=>{if(!confirm('Сбросить локальные изменения? Сначала можно экспортировать JSON.'))return;if(editingText)cancelInline();data=structuredClone(seed);data.annotations=structuredClone(reviewSeed);selected.clear();active=null;editingBoundaries=false;save();render()};render();
+</script></body></html>
