@@ -205,7 +205,7 @@ publicationDialog.innerHTML='<div style="display:flex;justify-content:space-betw
 document.body.appendChild(publicationDialog);
 let pendingPublication=null;
 function publishedRecords(){return Array.isArray(data.publications)?data.publications:[]}
-function readyBlocks(){return data.blocks.filter(b=>b.status==='готово'&&b.paragraphIds.some(id=>{const p=data.paragraphs.find(q=>q.id===id);return p&&publishParagraph(p)&&String(p.text||'').trim()}))}
+function readyBlocks(){return data.blocks.filter(b=>b.status==='готово'&&(b.type==='image'&&!!b.image?.src||b.paragraphIds.some(id=>{const p=data.paragraphs.find(q=>q.id===id);return p&&publishParagraph(p)&&String(p.text||'').trim()})))}
 function blockBody(b){return b.paragraphIds.map(id=>data.paragraphs.find(p=>p.id===id)).filter(p=>p&&publishParagraph(p)).map(p=>({id:p.id,text:p.text||''}))}
 function currentBlockSignature(b){return JSON.stringify({body:blockBody(b),image:b.type==='image'?b.image:null})}
 function latestUse(b){return [...publishedRecords()].reverse().flatMap(r=>(r.blocks||[]).filter(x=>x.id===b.id).map(x=>({record:r,block:x})))[0]}
