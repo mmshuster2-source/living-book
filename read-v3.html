@@ -6,7 +6,7 @@
  const target=document.getElementById('reading'),links=document.getElementById('tocLinks'),toc=document.getElementById('toc'),toggle=document.getElementById('tocToggle');
  toggle.onclick=()=>{const open=toc.classList.toggle('open');toggle.setAttribute('aria-expanded',String(open))};
  const file=new URLSearchParams(location.search).get('file')||'';
- if(!/^[^/?#\\]+\.html?$/i.test(file)){target.textContent='Не указана публикация.';return}
+ if(!/^[^/?#\\]+\.html?$/i.test(file)){target.innerHTML='Выбери статью в <a href="reader-preview.html">библиотеке</a>.';return}
  try{
   const response=await fetch('publications/'+encodeURIComponent(file));if(!response.ok)throw Error('Не найдено');
   const doc=new DOMParser().parseFromString(await response.text(),'text/html');
@@ -25,6 +25,6 @@
   headings.forEach((h,i)=>{h.id='chapter-'+(i+1);const a=document.createElement('a');a.href='#'+h.id;a.className='depth'+h.tagName.slice(1);a.textContent=h.textContent.trim();a.onclick=()=>{toc.classList.remove('open');toggle.setAttribute('aria-expanded','false')};links.appendChild(a)});
   if(!headings.length)links.textContent='Разделов пока нет';
   if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){links.querySelectorAll('a').forEach(a=>a.classList.toggle('active',a.hash==='#'+e.target.id))}},{rootMargin:'-10% 0px -75% 0px'});headings.forEach(h=>observer.observe(h))}
- }catch(e){target.textContent='Не удалось открыть статью.'}
+ }catch(e){target.innerHTML='Статья по указанному адресу не найдена. <a href="reader-preview.html">Выбрать статью в библиотеке</a>.'}
 })();
 </script></body></html>
