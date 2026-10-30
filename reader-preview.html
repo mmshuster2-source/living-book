@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Живая книга — библиотека</title>
+<style>
+:root{color-scheme:light;--paper:#fbfaf7;--ink:#242a30;--muted:#687176;--line:#dadbd5;--accent:#395e68}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+header{border-bottom:1px solid var(--line);background:#fff;padding:17px max(22px,calc((100vw - 1040px)/2))}
+.brand{font-family:Georgia,serif;font-size:23px;letter-spacing:.01em}header small{display:block;color:var(--muted);margin-top:4px}
+main{max-width:950px;margin:auto;padding:72px 26px 100px}.eyebrow{letter-spacing:.12em;text-transform:uppercase;font-size:12px;color:var(--accent)}
+h1{font:normal clamp(43px,7vw,74px)/1.08 Georgia,serif;letter-spacing:-.025em;margin:15px 0 20px}
+.intro{font:21px/1.6 Georgia,serif;max-width:690px;color:#48565c;margin-bottom:75px}
+h2{font:normal 30px Georgia,serif;margin:0 0 14px}.description{color:var(--muted);margin:0 0 28px}
+.library{border-top:1px solid var(--line)}.item{display:block;text-decoration:none;color:inherit;border-bottom:1px solid var(--line);padding:23px 8px;transition:background .12s}
+.item:hover{background:#eff3f1}.item-title{font:normal 24px/1.3 Georgia,serif}.item-meta{color:var(--muted);font-size:12px;margin-top:9px}.arrow{float:right;color:var(--accent);font-size:22px}
+.empty{padding:26px 8px;color:var(--muted);line-height:1.6}footer{border-top:1px solid var(--line);margin-top:80px;padding-top:20px;color:var(--muted);font-size:13px}
+@media(max-width:600px){main{padding:45px 20px 70px}.intro{font-size:19px;margin-bottom:52px}.item-title{font-size:21px}}
+</style></head><body>
+<header><div class="brand">Живая книга</div><small>Авторская библиотека · пробная читательская версия</small></header>
+<main><div class="eyebrow">Читать и размышлять</div><h1>Живая книга</h1>
+<p class="intro">Статьи, исследования и инженерные размышления. Материалы появляются по мере подготовки к публикации.</p>
+<section aria-labelledby="available"><h2 id="available">Опубликованные статьи</h2><p class="description">Выберите материал для чтения.</p>
+<div id="library" class="library"><div class="empty">Загружаю список публикаций…</div></div></section>
+<footer>Это открытая читательская часть. Рабочие рукописи и редактор сюда не подключены.</footer></main>
+<script>
+(async()=>{
+ const holder=document.getElementById('library');
+ const root='https://mmshuster2-source.github.io/living-book/publications/';
+ const api='https://api.github.com/repos/mmshuster2-source/living-book/contents/publications';
+ const titleFromFilename=f=>f.replace(/\.html?$/i,'').replace(/[-_]+/g,' ');
+ try{
+  const resp=await fetch(api,{headers:{Accept:'application/vnd.github+json'}});
+  if(!resp.ok)throw Error('GitHub API: '+resp.status);
+  const items=(await resp.json()).filter(x=>x.type==='file'&&/\.html?$/i.test(x.name)).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+  holder.replaceChildren();
+  if(!items.length){holder.textContent='Пока нет опубликованных HTML-статей.';holder.className='empty';return}
+  for(const item of items){
+   const link=document.createElement('a');link.className='item';link.href=root+encodeURIComponent(item.name);
+   const arrow=document.createElement('span');arrow.className='arrow';arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');
+   const title=document.createElement('div');title.className='item-title';title.textContent=titleFromFilename(item.name);
+   const meta=document.createElement('div');meta.className='item-meta';meta.textContent='Открыть публикацию';
+   link.append(arrow,title,meta);holder.append(link);
+  }
+ }catch(e){
+  holder.replaceChildren();
+  const message=document.createElement('div');message.className='empty';message.textContent='Не удалось загрузить каталог. Можно открыть папку публикаций на GitHub.';
+  const link=document.createElement('a');link.href='https://github.com/mmshuster2-source/living-book/tree/main/publications';link.textContent='Посмотреть публикации';message.append(document.createElement('br'),link);holder.append(message);
+ }
+})();
+</script></body></html>
