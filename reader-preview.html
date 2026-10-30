@@ -27,6 +27,15 @@ h2{font:normal 30px Georgia,serif;margin:0 0 14px}.description{color:var(--muted
  const root='https://mmshuster2-source.github.io/living-book/publications/';
  const api='https://api.github.com/repos/mmshuster2-source/living-book/contents/publications';
  const titleFromFilename=f=>f.replace(/\.html?$/i,'').replace(/[-_]+/g,' ');
+ const publicationTitle=async item=>{
+  const response=await fetch(root+encodeURIComponent(item.name));
+  if(!response.ok)throw Error('Публикация недоступна');
+  const html=await response.text();
+  const doc=new DOMParser().parseFromString(html,'text/html');
+  const heading=doc.querySelector('h1')?.textContent?.trim();
+  const title=doc.querySelector('title')?.textContent?.trim();
+  return heading||title||titleFromFilename(item.name);
+ };
  try{
   const resp=await fetch(api,{headers:{Accept:'application/vnd.github+json'}});
   if(!resp.ok)throw Error('GitHub API: '+resp.status);
@@ -36,7 +45,7 @@ h2{font:normal 30px Georgia,serif;margin:0 0 14px}.description{color:var(--muted
   for(const item of items){
    const link=document.createElement('a');link.className='item';link.href=root+encodeURIComponent(item.name);
    const arrow=document.createElement('span');arrow.className='arrow';arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');
-   const title=document.createElement('div');title.className='item-title';title.textContent=titleFromFilename(item.name);
+   const title=document.createElement('div');title.className='item-title';title.textContent=titleFromFilename(item.name);publicationTitle(item).then(name=>{title.textContent=name}).catch(()=>{});
    const meta=document.createElement('div');meta.className='item-meta';meta.textContent='Открыть публикацию';
    link.append(arrow,title,meta);holder.append(link);
   }
