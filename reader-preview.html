@@ -43,7 +43,7 @@ h2{font:normal 30px Georgia,serif;margin:0 0 14px}.description{color:var(--muted
   holder.replaceChildren();
   if(!items.length){holder.textContent='Пока нет опубликованных HTML-статей.';holder.className='empty';return}
   for(const item of items){
-   const link=document.createElement('a');link.className='item';link.href=root+encodeURIComponent(item.name);
+   const link=document.createElement('a');link.className='item';link.href='read.html?file='+encodeURIComponent(item.name);
    const arrow=document.createElement('span');arrow.className='arrow';arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');
    const title=document.createElement('div');title.className='item-title';title.textContent=titleFromFilename(item.name);publicationTitle(item).then(name=>{title.textContent=name}).catch(()=>{});
    const meta=document.createElement('div');meta.className='item-meta';meta.textContent='Открыть публикацию';
