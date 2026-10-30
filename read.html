@@ -1,0 +1,29 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Читать — Живая книга</title><link rel="stylesheet" href="reader-style.css"></head><body>
+<nav style="font:13px system-ui,sans-serif;margin:-38px 0 30px"><a href="reader-preview.html">← К библиотеке</a></nav>
+<article id="reading"><p>Загрузка статьи…</p></article>
+<script>
+(async()=>{
+ const target=document.getElementById('reading');
+ const file=new URLSearchParams(location.search).get('file')||'';
+ if(!/^[^/?#\\]+\.html?$/i.test(file)){target.textContent='Не указана публикация.';return}
+ try{
+  const res=await fetch('publications/'+encodeURIComponent(file));if(!res.ok)throw Error('Статья не найдена');
+  const doc=new DOMParser().parseFromString(await res.text(),'text/html');
+  // Published documents may contain their own scripts and presentation styles.
+  // Reader imports content only, never executes scripts or inherited CSS.
+  doc.querySelectorAll('script,style,link,iframe,object,embed,form,meta,base').forEach(el=>el.remove());
+  const fragment=document.createDocumentFragment();
+  for(const child of Array.from(doc.body.children)){
+   for(const element of [child,...child.querySelectorAll('*')]){
+    for(const attr of Array.from(element.attributes)){if(/^on/i.test(attr.name)||['srcdoc','contenteditable'].includes(attr.name))element.removeAttribute(attr.name)}
+    if(element.hasAttribute('href')&&/^javascript:/i.test(element.getAttribute('href').trim()))element.removeAttribute('href');
+    if(element.hasAttribute('src')&&/^javascript:/i.test(element.getAttribute('src').trim()))element.removeAttribute('src');
+   }
+   fragment.appendChild(document.importNode(child,true));
+  }
+  target.replaceChildren(fragment);
+  const title=doc.querySelector('h1')?.textContent?.trim()||doc.title||'Живая книга';
+  document.title=title+' — Живая книга';
+ }catch(e){target.textContent='Не удалось открыть статью. Проверь её наличие в папке публикаций.'}
+})();
+</script></body></html>
