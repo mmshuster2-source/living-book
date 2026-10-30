@@ -1,0 +1,36 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Читать — Живая книга</title><link rel="stylesheet" href="reader-style-v4.css"></head><body>
+<header class="site-head"><strong>Живая книга</strong><div class="reader-controls"><label for="density">Текст</label><select id="density" aria-label="Плотность текста"><option value="compact">Компактно</option><option value="normal">Обычно</option><option value="spacious">Просторно</option></select><a href="library.html">К библиотеке</a></div></header>
+<div class="reader-layout"><button type="button" class="toc-toggle" id="tocToggle" aria-expanded="false">Оглавление</button><nav id="toc" class="toc" aria-label="Оглавление"><div class="toc-heading">Содержание</div><div id="tocLinks"></div></nav><main class="reader-main"><article id="reading"><p>Загрузка статьи…</p></article></main><aside class="reader-side" aria-hidden="true"></aside></div>
+<script>
+(async()=>{
+ const target=document.getElementById('reading'),links=document.getElementById('tocLinks'),toc=document.getElementById('toc'),toggle=document.getElementById('tocToggle');
+ toggle.onclick=()=>{const open=toc.classList.toggle('open');toggle.setAttribute('aria-expanded',String(open))};
+ const density=document.getElementById('density');
+ const choices=['compact','normal','spacious'];
+ let saved='normal';try{saved=localStorage.getItem('living-book-reader-density')||'normal'}catch(e){}
+ if(!choices.includes(saved))saved='normal';
+ density.value=saved;document.body.dataset.density=saved;
+ density.onchange=()=>{document.body.dataset.density=density.value;try{localStorage.setItem('living-book-reader-density',density.value)}catch(e){}};
+ const file=new URLSearchParams(location.search).get('file')||'';
+ if(!/^[^/?#\\]+\.html?$/i.test(file)){target.innerHTML='Выбери статью в <a href="library.html">библиотеке</a>.';return}
+ try{
+  const response=await fetch('publications/'+encodeURIComponent(file));if(!response.ok)throw Error('Не найдено');
+  const doc=new DOMParser().parseFromString(await response.text(),'text/html');
+  doc.querySelectorAll('script,style,link,iframe,object,embed,form,meta,base').forEach(x=>x.remove());
+  const frag=document.createDocumentFragment();
+  for(const child of Array.from(doc.body.children)){
+   for(const el of [child,...child.querySelectorAll('*')]){
+    for(const attr of Array.from(el.attributes))if(/^on/i.test(attr.name)||['srcdoc','contenteditable'].includes(attr.name))el.removeAttribute(attr.name);
+    for(const name of ['href','src'])if(el.hasAttribute(name)&&/^javascript:/i.test(el.getAttribute(name).trim()))el.removeAttribute(name);
+   }
+   frag.appendChild(document.importNode(child,true));
+  }
+  target.replaceChildren(frag);
+  document.title=(target.querySelector('h1')?.textContent?.trim()||doc.title||'Статья')+' — Живая книга';
+  const headings=Array.from(target.querySelectorAll('h2,h3'));
+  headings.forEach((h,i)=>{h.id='chapter-'+(i+1);const a=document.createElement('a');a.href='#'+h.id;a.className='depth'+h.tagName.slice(1);a.textContent=h.textContent.trim();a.onclick=()=>{toc.classList.remove('open');toggle.setAttribute('aria-expanded','false')};links.appendChild(a)});
+  if(!headings.length)links.textContent='Разделов пока нет';
+  if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){links.querySelectorAll('a').forEach(a=>a.classList.toggle('active',a.hash==='#'+e.target.id))}},{rootMargin:'-10% 0px -75% 0px'});headings.forEach(h=>observer.observe(h))}
+ }catch(e){target.innerHTML='Статья по указанному адресу не найдена. <a href="library.html">Выбрать статью в библиотеке</a>.'}
+})();
+</script></body></html>
