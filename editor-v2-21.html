@@ -477,6 +477,16 @@ function expertBox(parent,title,description,status){
 }
 
 function expertFieldDecisions(root,b,packageData){
+ root.querySelectorAll('.lb-inline-proposal,.lb-layer-proposals').forEach(x=>x.remove());
+ const fields=root.querySelector('#passportFields .lb-passport-group');
+ if(fields){
+   for(const [key,title] of [['shortName','Краткое название'],['level','Уровень абстракции'],['trust','Доверие'],['tags','Теги']]){
+    if(fields.querySelector('[data-field="'+key+'"]'))continue;
+    const label=exNode('label',title,fields,'field');
+    const input=exNode('input',null,label);input.dataset.field=key;input.value=Array.isArray(b[key])?b[key].join(', '):b[key]||'';
+    input.onchange=()=>{b[key]=input.value;if(save())renderTree()};
+   }
+ }
  const proposed=packageData?.passportProposals?.find(x=>x.blockId===b.id);if(!proposed)return;
  for(const [field,label] of [['name','Название'],['shortName','Краткое название'],['summary','Резюме'],['level','Уровень'],['trust','Доверие'],['tags','Теги']]){
   if(proposed[field]===undefined)continue;
