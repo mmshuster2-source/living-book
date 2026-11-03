@@ -1,0 +1,87 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Читать — Живая книга</title><link rel="stylesheet" href="reader-style-v4.css"><style>.issue-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;border-bottom:1px solid #e0e2de;padding:14px 38px;font:13px system-ui,sans-serif}.issue-bar select{max-width:min(460px,80vw);padding:7px;border:1px solid #d1d8d5;border-radius:5px;background:white}.issue-bar label{display:flex;align-items:center;gap:6px}.issue-bar[hidden]{display:none!important}@media(max-width:760px){.issue-bar{padding:12px 20px}}</style></head><body>
+<header class="site-head"><strong>Живая книга</strong><div class="reader-controls"><label for="density">Текст</label><select id="density" aria-label="Плотность текста"><option value="compact">Компактно</option><option value="normal">Обычно</option><option value="spacious">Просторно</option></select><label for="readerLayer">Слой</label><select id="readerLayer"><option value="all">Все</option><option value="popular">Основное</option><option value="details">Детали</option><option value="examples">Примеры</option><option value="data">Данные</option></select><a href="library.html">К библиотеке</a></div></header>
+<div id="issueBar" class="issue-bar" hidden><label for="issueSelect">Выпуск</label><select id="issueSelect"><option value="latest">Последняя</option><option value="all">Вся статья</option></select><label id="readLabel"><input type="checkbox" id="readCheck"> Прочитано</label></div><div class="reader-layout"><button type="button" class="toc-toggle" id="tocToggle" aria-expanded="false">Оглавление</button><nav id="toc" class="toc" aria-label="Оглавление"><div class="toc-heading">Содержание</div><div id="tocLinks"></div></nav><main class="reader-main"><article id="reading"><p>Загрузка статьи…</p></article></main><aside class="reader-side" aria-hidden="true"></aside></div>
+<script>
+(async()=>{
+ const target=document.getElementById('reading'),links=document.getElementById('tocLinks'),toc=document.getElementById('toc'),toggle=document.getElementById('tocToggle');
+ toggle.onclick=()=>{const open=toc.classList.toggle('open');toggle.setAttribute('aria-expanded',String(open))};
+ const density=document.getElementById('density');
+ const choices=['compact','normal','spacious'];
+ let saved='normal';try{saved=localStorage.getItem('living-book-reader-density')||'normal'}catch(e){}
+ if(!choices.includes(saved))saved='normal';
+ density.value=saved;document.body.dataset.density=saved;
+ density.onchange=()=>{document.body.dataset.density=density.value;try{localStorage.setItem('living-book-reader-density',density.value)}catch(e){}};
+ const file=new URLSearchParams(location.search).get('file')||'';
+ if(!/^[^/?#\\]+\.html?$/i.test(file)){target.innerHTML='Выбери статью в <a href="library.html">библиотеке</a>.';return}
+ try{
+  const response=await fetch('publications/'+encodeURIComponent(file));if(!response.ok)throw Error('Не найдено');
+  const doc=new DOMParser().parseFromString(await response.text(),'text/html');
+  doc.querySelectorAll('script,style,link,iframe,object,embed,form,meta,base').forEach(x=>x.remove());
+  const frag=document.createDocumentFragment();
+  for(const child of Array.from(doc.body.children)){
+   for(const el of [child,...child.querySelectorAll('*')]){
+    for(const attr of Array.from(el.attributes))if(/^on/i.test(attr.name)||['srcdoc','contenteditable'].includes(attr.name))el.removeAttribute(attr.name);
+    for(const name of ['href','src'])if(el.hasAttribute(name)&&/^javascript:/i.test(el.getAttribute(name).trim()))el.removeAttribute(name);
+   }
+   frag.appendChild(document.importNode(child,true));
+  }
+  target.replaceChildren(frag);
+  document.title=(target.querySelector('h1')?.textContent?.trim()||doc.title||'Статья')+' — Живая книга';
+  const headings=Array.from(target.querySelectorAll('h2,h3'));
+  headings.forEach((h,i)=>{h.id='chapter-'+(i+1);const a=document.createElement('a');a.href='#'+h.id;a.className='depth'+h.tagName.slice(1);a.textContent=h.textContent.trim();a.title=h.getAttribute('title')||h.textContent.trim();a.onclick=()=>{toc.classList.remove('open');toggle.setAttribute('aria-expanded','false')};links.appendChild(a)});
+  if(!headings.length)links.textContent='Разделов пока нет';
+  
+  // Issue manifests are adjacent to published HTML files; legacy articles remain readable.
+  const bar=document.getElementById('issueBar'),picker=document.getElementById('issueSelect'),read=document.getElementById('readCheck'),readLabel=document.getElementById('readLabel');
+  const originalMarkup=target.innerHTML;
+  const readerLayer=document.getElementById('readerLayer');
+  function applyReaderLayers(){const layer=readerLayer.value;for(const wrap of target.querySelectorAll('.lb-content-block')){const pieces=[...wrap.querySelectorAll('[data-layer]')].filter(x=>x!==wrap);if(!pieces.length){wrap.hidden=layer!=='all'&&wrap.dataset.layer!==layer;continue}for(const p of pieces)p.hidden=layer!=='all'&&p.dataset.layer!==layer;wrap.hidden=pieces.every(p=>p.hidden);for(const h of wrap.children)if(/^H[2-6]$/.test(h.tagName))h.hidden=wrap.hidden;}const headers=[...target.querySelectorAll('h2,h3')].filter(h=>!h.hidden&&!h.closest('[hidden]'));links.replaceChildren();headers.forEach((h,i)=>{h.id='chapter-'+(i+1);const a=document.createElement('a');a.href='#'+h.id;a.className='depth'+h.tagName.slice(1);a.textContent=h.textContent.trim();a.title=h.title||h.textContent.trim();a.onclick=()=>{toc.classList.remove('open');toggle.setAttribute('aria-expanded','false')};links.appendChild(a)})}
+  readerLayer.onchange=applyReaderLayers;
+  let issueList=[];
+  function fillText(parent,tag,value){const x=document.createElement(tag);x.textContent=String(value??'');parent.appendChild(x);return x}
+  function renderIssue(issue){
+   target.replaceChildren();fillText(target,'h1',issue.title);
+   for(const section of issue.snapshot?.parts||[]){
+    const sec=document.createElement('section');fillText(sec,section.level===3?'h3':'h2',section.title);
+    for(const block of section.blocks||[]){const wrap=document.createElement("div");wrap.className="lb-content-block";wrap.dataset.layer=block.layer||"popular";
+     if(block.showHeading&&!block.subblock){const heading=fillText(wrap,'h3',block.name);heading.title=block.name}
+     if(block.image){const fig=document.createElement('figure');const img=document.createElement('img');img.src=block.image.src||'';img.alt=block.image.alt||'';fig.appendChild(img);if(block.image.caption)fillText(fig,'figcaption',block.image.caption);wrap.appendChild(fig)}
+     else if(block.table){const table=document.createElement('table');(block.table.rows||[]).forEach((row,i)=>{const tr=document.createElement('tr');row.forEach(value=>fillText(tr,i===0&&block.table.header?'th':'td',value));table.appendChild(tr)});wrap.appendChild(table)}
+     else for(const para of block.paragraphs||[]){const el=fillText(wrap,'p',para.text);el.dataset.layer=para.layer||block.layer||'popular';el.style.whiteSpace='pre-line'}
+     sec.appendChild(wrap);
+    }
+    target.appendChild(sec);
+   }
+   document.title=issue.title+' — Живая книга';
+  }
+  function updateRead(){
+   const id=picker.value;readLabel.hidden=id==='all';if(id==='all')return;
+   const issue=id==='latest'?issueList[0]:issueList.find(x=>x.id===id);if(!issue)return;
+   try{read.checked=localStorage.getItem('lb-read:'+file+':'+issue.id)==='yes'}catch(e){read.checked=false}
+  }
+  function chooseIssue(){
+   const id=picker.value;const issue=id==='latest'?issueList[0]:issueList.find(x=>x.id===id);
+   if(id==='all'||!issue){target.innerHTML=originalMarkup;document.title=(target.querySelector('h1')?.textContent||'Статья')+' — Живая книга'}
+   else renderIssue(issue);
+   const h=Array.from(target.querySelectorAll('h2,h3'));links.replaceChildren();h.forEach((heading,i)=>{heading.id='chapter-'+(i+1);const a=document.createElement('a');a.href='#'+heading.id;a.className='depth'+heading.tagName.slice(1);a.textContent=heading.textContent.trim();links.appendChild(a)});
+   updateRead();applyReaderLayers();
+   const url=new URL(location.href);url.searchParams.set('issue',id);history.replaceState(null,'',url);
+  }
+  applyReaderLayers();
+  try{
+   const response=await fetch('publications/'+encodeURIComponent(file.replace(/\.html?$/i,'.issues.json')),{cache:'no-store'});
+   if(response.ok){
+    const manifest=await response.json();
+    if(manifest.format==='living-book-issues-v1'&&Array.isArray(manifest.issues)&&manifest.issues.length){
+     issueList=manifest.issues.filter(x=>x.id&&x.snapshot&&x.date).sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
+     for(const item of issueList){const option=document.createElement('option');option.value=item.id;option.textContent=(item.shortTitle||item.title)+' · '+item.date;picker.appendChild(option)}
+     bar.hidden=false;const requested=new URLSearchParams(location.search).get('issue');picker.value=requested&&([...picker.options].some(x=>x.value===requested))?requested:'latest';
+     picker.onchange=chooseIssue;read.onchange=()=>{const item=picker.value==='latest'?issueList[0]:issueList.find(x=>x.id===picker.value);if(!item)return;try{localStorage.setItem('lb-read:'+file+':'+item.id,read.checked?'yes':'no')}catch(e){}};
+     chooseIssue()
+    }
+   }
+  }catch(e){/* no manifest: old single-article reading still works */}
+if('IntersectionObserver' in window){const observer=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){links.querySelectorAll('a').forEach(a=>a.classList.toggle('active',a.hash==='#'+e.target.id))}},{rootMargin:'-10% 0px -75% 0px'});headings.forEach(h=>observer.observe(h))}
+ }catch(e){target.innerHTML='Статья по указанному адресу не найдена. <a href="library.html">Выбрать статью в библиотеке</a>.'}
+})();
+</script></body></html>
