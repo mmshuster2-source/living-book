@@ -313,7 +313,7 @@ function removeSpecialBlock(b){const ids=new Set(b.paragraphIds);data.blocks=dat
 
 /* V2.15 — freezes individual issue selections without changing article blocks. */
 const issuesDlg=document.createElement('dialog');issuesDlg.id='issuesDialog';issuesDlg.style.cssText='width:min(810px,95vw);max-height:86vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:22px;background:var(--bg);color:var(--ink)';
-issuesDlg.innerHTML='<h2>Выпуски статьи</h2><p class="msg">Выпуск — неизменяемый снимок выбранных готовых блоков. Для сайта экспортируй JSON и загрузи его в GitHub рядом с HTML-статьёй.</p><label class="field">Имя HTML-файла полной статьи в publications/<input id="issueSourceFile" placeholder="например: novye-aes-01.html"></label><label class="field">Полное название выпуска<input id="issueFullTitle"></label><label class="field">Краткое название<input id="issueShortTitle"></label><label class="field">Дата выпуска<input type="date" id="issueDate"></label><div id="issueChoices"></div><div class="actions"><button class="btn primary" id="issueCreate">Зафиксировать выпуск</button><button class="btn" id="issueExport">Экспорт каталога JSON</button><button class="btn" id="issueClose">Закрыть</button></div><h3>Созданные выпуски</h3><div id="issueHistory"></div>';
+issuesDlg.innerHTML='<h2>Выпуски статьи</h2><p class="msg">Выпуск — неизменяемый снимок выбранных готовых блоков. Для сайта экспортируй JSON и загрузи его в GitHub рядом с HTML-статьёй.</p><label class="field">Имя HTML-файла полной статьи в publications/<input id="issueSourceFile" placeholder="например: novye-aes-01.html"></label><label class="field">Полное название выпуска<input id="issueFullTitle"></label><label class="field">Краткое название<input id="issueShortTitle"></label><label class="field">Дата выпуска<input type="date" id="issueDate"></label><div id="issueChoices"></div><div class="actions"><button class="btn primary" id="issueCreate">Зафиксировать выпуск</button><button class="btn" id="issueExport">Экспорт каталога JSON</button><button class="btn" id="issueExportFull">Экспорт всей статьи HTML</button><button class="btn" id="issueClose">Закрыть</button></div><h3>Созданные выпуски</h3><div id="issueHistory"></div>';
 document.body.appendChild(issuesDlg);
 $('issuesOpen').onclick=()=>{
  $('issueDate').value=new Date().toLocaleDateString('en-CA');
@@ -343,6 +343,7 @@ $('issueCreate').onclick=()=>{
  issuesDlg.querySelectorAll('[data-issue-block]:checked').forEach(el=>el.checked=false);
  alert('Выпуск сохранён в статье. Теперь экспортируй каталог JSON и загрузи на GitHub.');
 };
+$('issueExportFull').onclick=()=>{const file=$('issueSourceFile').value.trim()||data.issueSourceFile||'';if(!/^[a-zA-Z0-9._-]+\.html?$/i.test(file))return alert('Укажи имя HTML-файла.');const snap=publicationSnapshot();if(!snap.blocks.length)return alert('Нет готовых блоков.');downloadPublication(file,htmlPublication(snap),'text/html;charset=utf-8')};
 $('issueExport').onclick=()=>{
  const sourceFile=$('issueSourceFile').value.trim()||data.issueSourceFile||'';
  if(!/^[a-zA-Z0-9._-]+\.html?$/i.test(sourceFile))return alert('Сначала укажи имя HTML-статьи.');
