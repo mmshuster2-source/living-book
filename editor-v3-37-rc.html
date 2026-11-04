@@ -62,7 +62,7 @@ aside.right>details{
  border:0!important;margin:0!important;padding:0!important;
  overflow:hidden
 }
-aside.right>details[open]{flex:1 1 auto!important;display:flex!important;flex-direction:column!important;min-height:0}
+aside.right>details[open]{flex:1 1 auto!important;display:block!important;position:relative!important;min-height:0}
 aside.right>details>summary{
  flex:0 0 auto;list-style-position:inside;
  border:1px solid var(--line);border-radius:6px;
@@ -75,7 +75,7 @@ aside.right .v337-panel-body{
  overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
  scrollbar-gutter:stable;padding:8px 3px 22px
 }
-aside.right>details[open]>.v337-panel-body{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important}
+aside.right>details[open]>.v337-panel-body{position:absolute!important;top:42px;bottom:0;left:0;right:0;height:auto!important;overflow-y:auto!important}
 aside.right>details:not([open])>.v337-panel-body{display:none}
 #revisionPanel .box{background:transparent;border:0;padding:5px 0}
 #reviewControls.v337-filters,aside.right .v337-filters{
