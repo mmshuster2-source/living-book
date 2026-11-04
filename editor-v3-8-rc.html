@@ -147,9 +147,10 @@ const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,
 /* V3.8: article and catalogue are different durability domains.
    Never report article-save failure after successfully committing article bytes. */
 function persistArticleSnapshot(storage,articleKey,expectedSnapshot,article){
- const actual=storage.getItem(articleKey);
+ let actual,next;
+ try{actual=storage.getItem(articleKey);next=JSON.stringify(article)}
+ catch(error){return {ok:false,reason:'storage',message:error.message}}
  if(actual!==expectedSnapshot)return {ok:false,reason:'conflict'};
- const next=JSON.stringify(article);
  try{
   storage.setItem(articleKey,next);
   if(storage.getItem(articleKey)!==next)return {ok:false,reason:'verification'};
