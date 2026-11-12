@@ -1944,7 +1944,9 @@ function enhanceTableGrid(block){
  }
  makeButton('+ Строка',()=>{if(rows.length>=100)return alert('Максимум 100 строк');rows.push(Array(cols).fill(''));sync();rebuild()});
  makeButton('+ Столбец',()=>{if(cols>=30)return alert('Максимум 30 столбцов');rows.forEach(r=>r.push(''));cols++;sync();rebuild()});
+ makeButton('Сохранить таблицу',()=>saveTableFromPassport(block.id));
  makeButton('Очистить ячейки',()=>{if(!confirm('Очистить содержимое всех ячеек? Изменение ещё можно отменить, не сохраняя таблицу.'))return;rows=rows.map(r=>r.map(() => ''));sync();rebuild()});
+ const oldLabel=raw.closest('label');
  rawPanel.append(sum,raw,apply);
  raw.hidden=false;
  apply.onclick=()=>{
@@ -1955,8 +1957,7 @@ function enhanceTableGrid(block){
   sync();rebuild();rawPanel.open=false;
  };
  holder.append(info,tools,view,rawPanel);
- const oldLabel=raw.closest('label');
- if(oldLabel){oldLabel.before(holder);oldLabel.remove();rawPanel.insertBefore(raw,apply)}
+ if(oldLabel){oldLabel.before(holder);oldLabel.remove()}
  else $('passport').appendChild(holder);
  sync();rebuild();
 }
