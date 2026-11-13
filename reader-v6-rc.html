@@ -22,7 +22,7 @@
 <aside class="reader-side" aria-label="Настройки чтения">
 <section><h2>Выпуски</h2><select id="issueSelect" aria-label="Выбор выпуска"><option value="latest">Последний выпуск</option><option value="all">Вся опубликованная статья</option></select><small id="issueInfo"></small><button type="button" id="copyLink">Скопировать ссылку</button><small id="copyStatus"></small></section>
 <section class="layers"><h2>Слои</h2><label class="layer-row"><input type="checkbox" data-layer="popular" checked> Основное</label><label class="layer-row"><input type="checkbox" data-layer="detail" checked> Детали</label><label class="layer-row"><input type="checkbox" data-layer="example" checked> Примеры</label><label class="layer-row"><input type="checkbox" data-layer="data" checked> Данные</label></section>
-<section><h2>Чтение</h2><label id="readRow"><input type="checkbox" id="readCheck"> Прочитано</label><small>Отметка хранится только в этом браузере.</small></section></aside></div>
+<section><h2>Чтение</h2><label id="readRow"><input type="checkbox" id="readCheck"> Прочитано</label><label><input type="checkbox" id="hideRead"> Скрывать прочитанные выпуски</label><small>Отметки и фильтр сохраняются в этом браузере.</small></section></aside></div>
 <script>
 (async()=>{
 'use strict';
@@ -40,9 +40,20 @@ catch(e){target.textContent='Не удалось загрузить катало
 for(const i of issues){const option=document.createElement('option');option.value=i.id;option.textContent=(i.shortTitle||i.title)+' · '+i.date;picker.appendChild(option)}
 const requested=search.get('issue');picker.value=[...picker.options].some(o=>o.value===requested)?requested:'latest';
 const layerControls=[...document.querySelectorAll('[data-layer]')],selectedLayers=()=>new Set(layerControls.filter(x=>x.checked).map(x=>x.dataset.layer));
-const read=$('readCheck'),readRow=$('readRow');
+const read=$('readCheck'),readRow=$('readRow'),hideRead=$('hideRead');
+const filterKey='lb-hide-read:'+file;
+try{hideRead.checked=localStorage.getItem(filterKey)==='yes'}catch(e){}
+const wasRead=issue=>{if(!issue)return false;try{return localStorage.getItem('lb-read:'+file+':'+issue.id)==='yes'}catch(e){return false}};
+function eligibleIssues(){return hideRead.checked?issues.filter(i=>!wasRead(i)):issues}
+function refreshIssueOptions(){
+ const selected=picker.value;
+ for(const option of [...picker.options])if(option.value!=='latest'&&option.value!=='all')option.remove();
+ for(const item of issues){if(hideRead.checked&&wasRead(item)&&item.id!==selected)continue;
+  const option=document.createElement('option');option.value=item.id;option.textContent=(item.shortTitle||item.title)+' · '+item.date;picker.appendChild(option)}
+ if(![...picker.options].some(o=>o.value===selected))picker.value='latest';
+}
 const canonicalLayer=l=>({popular:'popular',detail:'detail',details:'detail',example:'example',examples:'example',data:'data'}[l]||'popular');
-function resolveIssue(){return picker.value==='latest'?issues[0]:issues.find(i=>i.id===picker.value)}
+function resolveIssue(){return picker.value==='latest'?eligibleIssues()[0]:issues.find(i=>i.id===picker.value)}
 function add(parent,tag,value,cls){const el=document.createElement(tag);if(value!=null)el.textContent=String(value);if(cls)el.className=cls;parent.appendChild(el);return el}
 function renderText(parent,value){const chunks=String(value||'').split(/\n\s*\n/);for(const chunk of chunks){if(!chunk.trim())continue;const p=add(parent,'p');const lines=chunk.split('\n');lines.forEach((line,idx)=>{if(idx)p.appendChild(document.createTextNode('\n'));const span=add(p,'span',null,/^\s*(?:[-•]|\d+[.)]|[IVX]+\.)\s/.test(line)?'list-line':'line');const bold=line.split(/(\*\*[^*]+\*\*)/);for(const part of bold){if(part.startsWith('**')&&part.endsWith('**'))add(span,'strong',part.slice(2,-2));else span.appendChild(document.createTextNode(part))}})}}
 function renderBlock(section,block,layers){const blockLayer=canonicalLayer(block.layer);const paras=(block.paragraphs||[]).filter(p=>layers.has(canonicalLayer(p.layer||blockLayer)));const showMedia=layers.has(blockLayer);if(!paras.length&&!(showMedia&&(block.image||block.table)))return false;
@@ -62,17 +73,18 @@ for(const issue of [...issues].reverse())for(const part of issue.snapshot.parts|
 }
 return [...sections.values()].filter(part=>part.blocks.length).sort((a,b)=>(Number.isFinite(a.sectionOrder)?a.sectionOrder:Infinity)-(Number.isFinite(b.sectionOrder)?b.sectionOrder:Infinity)).map(part=>({...part,blocks:part.blocks.slice().sort((a,b)=>(Number.isFinite(a.articleOrder)?a.articleOrder:Infinity)-(Number.isFinite(b.articleOrder)?b.articleOrder:Infinity))}))}
 function rebuildToc(){links.replaceChildren();const headings=[...target.querySelectorAll('section > h2,section > h3,section > .lb-content-block > h3')];headings.forEach((h,i)=>{const isBlock=h.parentElement.classList.contains('lb-content-block');h.id='section-'+(i+1);const a=add(links,'a',h.textContent,isBlock?'depth4':'depth'+h.tagName.slice(1));a.href='#'+h.id;a.onclick=()=>{toc.classList.remove('open');$('tocToggle').setAttribute('aria-expanded','false')}});if(!headings.length)add(links,'div','Нет видимых разделов')}
-function updateRead(){const issue=resolveIssue(),isAll=picker.value==='all';readRow.hidden=isAll;if(isAll)return;try{read.checked=localStorage.getItem('lb-read:'+file+':'+issue.id)==='yes'}catch(e){read.checked=false}}
+function updateRead(){const issue=resolveIssue();readRow.hidden=picker.value==='all'||!issue;read.checked=wasRead(issue)}
 function render(){const layers=selectedLayers(),issue=resolveIssue();target.replaceChildren();const all=picker.value==='all';add(target,'h1',data.articleTitle||issue?.snapshot?.title||'Статья');
 let visible=0;for(const part of getParts()){const sec=document.createElement('section');let count=0;for(const block of part.blocks||[])if(renderBlock(sec,block,layers))count++;
 if(count){const title=add(sec,part.level===3?'h3':'h2',part.title);sec.prepend(title);target.appendChild(sec);visible+=count}}
-if(!visible)add(target,'p','В выбранном выпуске нет содержания в активных слоях. Включите слой «Данные» или другие слои.', 'draft-note');
-$('issueInfo').textContent=all?'Объединение '+issues.length+' выпусков без повторов блоков':(issue.title+' · '+issue.date);
+if(!visible)add(target,'p',!issue&&!all?'Все выпуски прочитаны. Сними фильтр «Скрывать прочитанные выпуски», чтобы увидеть их снова.':'В выбранном выпуске нет содержания в активных слоях. Включите соответствующие слои.', 'draft-note');
+$('issueInfo').textContent=all?'Объединение '+issues.length+' выпусков без повторов блоков':(issue?issue.title+' · '+issue.date:'Непрочитанных выпусков нет');
 rebuildToc();updateRead();document.title=(data.articleTitle||'Статья')+' — Живая книга';
 const u=new URL(location.href);u.searchParams.set('file',file);u.searchParams.set('issue',picker.value);history.replaceState(null,'',u)}
-picker.onchange=render;for(const x of layerControls)x.onchange=render;
-read.onchange=()=>{const issue=resolveIssue();if(issue)try{localStorage.setItem('lb-read:'+file+':'+issue.id,read.checked?'yes':'no')}catch(e){}};
+picker.onchange=()=>{refreshIssueOptions();render()};for(const x of layerControls)x.onchange=render;
+hideRead.onchange=()=>{try{localStorage.setItem(filterKey,hideRead.checked?'yes':'no')}catch(e){};refreshIssueOptions();render()};
+read.onchange=()=>{const issue=resolveIssue();if(!issue)return;try{localStorage.setItem('lb-read:'+file+':'+issue.id,read.checked?'yes':'no')}catch(e){};if(hideRead.checked&&read.checked)picker.value='latest';refreshIssueOptions();render()};
 $('copyLink').onclick=async()=>{const text=location.href;try{await navigator.clipboard.writeText(text);$('copyStatus').textContent='Ссылка скопирована'}catch(e){$('copyStatus').textContent='Адрес: '+text}};
-render();
+refreshIssueOptions();render();
 })();
 </script></body></html>
