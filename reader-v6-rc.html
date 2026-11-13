@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Читатель RC — Живая книга</title><link rel="stylesheet" href="reader-style-v4.css">
+<style>
+.reader-layout{grid-template-columns:minmax(175px,230px) minmax(0,760px) minmax(175px,230px);column-gap:28px;max-width:1540px;padding-top:32px}
+.reader-side{position:sticky;top:24px;align-self:start;max-height:calc(100vh - 40px);overflow:auto;border-left:1px solid var(--line);padding:12px 0 20px 19px;font:13px/1.45 system-ui,sans-serif}
+.reader-side h2{font:600 14px system-ui,sans-serif;margin:0 0 10px}.reader-side section{border-bottom:1px solid var(--line);padding:8px 0 18px;margin-bottom:16px}
+.reader-side label{display:flex;align-items:center;gap:7px;padding:6px 0;cursor:pointer}.reader-side select{max-width:100%;width:100%;border:1px solid #d1d8d5;border-radius:5px;background:white;padding:8px;font:13px system-ui,sans-serif}
+.reader-side button{border:1px solid #d1d8d5;background:white;border-radius:4px;padding:6px 9px;cursor:pointer}
+.reader-side small{display:block;color:var(--muted);margin-top:9px}.reader-main article .draft-note{font:14px system-ui,sans-serif;color:var(--muted)}
+.reader-main article .lb-content-block{margin-bottom:15px}.reader-main article .lb-content-block>h3{margin-top:20px}
+.reader-main article .lb-content-block p{white-space:normal}.reader-main article .lb-content-block .list-line{display:block;padding-left:1.4em;text-indent:-1.4em}
+.reader-main article .lb-content-block .line{display:block}.toc a.depth3{padding-left:12px}.toc-heading{margin-bottom:9px}
+#copyStatus{min-height:20px;color:var(--muted)}.rc-label{font:11px system-ui,sans-serif;color:var(--muted);margin-left:8px}
+@media(max-width:1080px){.reader-layout{grid-template-columns:170px minmax(0,1fr) 175px;column-gap:18px}.reader-side{display:block}}
+@media(max-width:790px){.reader-layout{display:flex;flex-direction:column;padding:18px 18px 70px;gap:12px}.reader-side{order:0;position:static;max-height:none;overflow:visible;border:1px solid var(--line);padding:12px;width:100%}.reader-main{order:1}.toc-toggle{order:2}.toc{order:3;width:100%}.reader-side section{margin-bottom:8px;padding-bottom:10px}.reader-side section.layers{display:flex;flex-wrap:wrap;gap:0 14px}.reader-side section.layers h2{width:100%}.reader-side .layer-row{width:45%}}
+@media print{.reader-side{display:none}}
+</style></head><body data-density="normal">
+<header class="site-head"><strong>Живая книга <span class="rc-label">Читатель V6 RC</span></strong><div class="reader-controls"><label for="density">Текст</label><select id="density"><option value="compact">Компактно</option><option value="normal">Обычно</option><option value="spacious">Просторно</option></select><a href="library.html">Библиотека</a></div></header>
+<div class="reader-layout"><button type="button" class="toc-toggle" id="tocToggle" aria-expanded="false">Оглавление</button><nav id="toc" class="toc" aria-label="Оглавление"><div class="toc-heading">Содержание</div><div id="tocLinks"></div></nav>
+<main class="reader-main"><article id="reading"><p>Загрузка выпусков…</p></article></main>
+<aside class="reader-side" aria-label="Настройки чтения">
+<section><h2>Выпуски</h2><select id="issueSelect" aria-label="Выбор выпуска"><option value="latest">Последний выпуск</option><option value="all">Вся опубликованная статья</option></select><small id="issueInfo"></small><button type="button" id="copyLink">Скопировать ссылку</button><small id="copyStatus"></small></section>
+<section class="layers"><h2>Слои</h2><label class="layer-row"><input type="checkbox" data-layer="popular" checked> Основное</label><label class="layer-row"><input type="checkbox" data-layer="detail" checked> Детали</label><label class="layer-row"><input type="checkbox" data-layer="example" checked> Примеры</label><label class="layer-row"><input type="checkbox" data-layer="data" checked> Данные</label></section>
+<section><h2>Чтение</h2><label id="readRow"><input type="checkbox" id="readCheck"> Прочитано</label><small>Отметка хранится только в этом браузере.</small></section></aside></div>
+<script>
+(async()=>{
+'use strict';
+const $=id=>document.getElementById(id),target=$('reading'),picker=$('issueSelect'),toc=$('toc'),links=$('tocLinks');
+$('tocToggle').onclick=()=>{const open=toc.classList.toggle('open');$('tocToggle').setAttribute('aria-expanded',String(open))};
+const density=$('density');const options=['compact','normal','spacious'];
+try{const saved=localStorage.getItem('living-book-reader-density');if(options.includes(saved))density.value=saved}catch(e){}
+document.body.dataset.density=density.value;
+density.onchange=()=>{document.body.dataset.density=density.value;try{localStorage.setItem('living-book-reader-density',density.value)}catch(e){}};
+const search=new URLSearchParams(location.search),file=search.get('file')||'avtonomny-energovuzol-01.issues.json';
+if(!/^[a-z0-9][a-z0-9._-]*\.issues\.json$/i.test(file)){target.textContent='Неверное имя каталога выпусков.';return}
+let data,issues=[];
+try{const response=await fetch('test-publications/'+encodeURIComponent(file),{cache:'no-store'});if(!response.ok)throw Error('HTTP '+response.status);data=await response.json();if(data.format!=='living-book-issues-v1'||!Array.isArray(data.issues))throw Error('Неверный формат');issues=data.issues.filter(i=>i.id&&i.snapshot&&i.date).sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));if(!issues.length)throw Error('Выпусков нет')}
+catch(e){target.textContent='Не удалось загрузить каталог выпусков: '+e.message;return}
+for(const i of issues){const option=document.createElement('option');option.value=i.id;option.textContent=(i.shortTitle||i.title)+' · '+i.date;picker.appendChild(option)}
+const requested=search.get('issue');picker.value=[...picker.options].some(o=>o.value===requested)?requested:'latest';
+const layerControls=[...document.querySelectorAll('[data-layer]')],selectedLayers=()=>new Set(layerControls.filter(x=>x.checked).map(x=>x.dataset.layer));
+const read=$('readCheck'),readRow=$('readRow');
+const canonicalLayer=l=>({popular:'popular',detail:'detail',details:'detail',example:'example',examples:'example',data:'data'}[l]||'popular');
+function resolveIssue(){return picker.value==='latest'?issues[0]:issues.find(i=>i.id===picker.value)}
+function add(parent,tag,value,cls){const el=document.createElement(tag);if(value!=null)el.textContent=String(value);if(cls)el.className=cls;parent.appendChild(el);return el}
+function renderText(parent,value){const chunks=String(value||'').split(/\n\s*\n/);for(const chunk of chunks){if(!chunk.trim())continue;const p=add(parent,'p');const lines=chunk.split('\n');lines.forEach((line,idx)=>{if(idx)p.appendChild(document.createTextNode('\n'));const span=add(p,'span',null,/^\s*(?:[-•]|\d+[.)]|[IVX]+\.)\s/.test(line)?'list-line':'line');const bold=line.split(/(\*\*[^*]+\*\*)/);for(const part of bold){if(part.startsWith('**')&&part.endsWith('**'))add(span,'strong',part.slice(2,-2));else span.appendChild(document.createTextNode(part))}})}}
+function renderBlock(section,block,layers){const blockLayer=canonicalLayer(block.layer);const paras=(block.paragraphs||[]).filter(p=>layers.has(canonicalLayer(p.layer||blockLayer)));const showMedia=layers.has(blockLayer);if(!paras.length&&!(showMedia&&(block.image||block.table)))return false;
+const wrapper=add(section,'div',null,'lb-content-block');if(block.showHeading&&!block.subblock)add(wrapper,'h3',block.name);
+if(showMedia&&block.image?.src){const fig=add(wrapper,'figure'),im=add(fig,'img');im.src=block.image.src;im.alt=block.image.alt||'';if(block.image.caption)add(fig,'figcaption',block.image.caption)}
+if(showMedia&&block.table){const table=add(wrapper,'table');(block.table.rows||[]).forEach((row,i)=>{const tr=add(table,'tr');row.forEach(cell=>add(tr,i===0&&block.table.header?'th':'td',cell))})}
+if(!block.image&&!block.table)for(const para of paras)renderText(wrapper,para.text);
+return true}
+function getParts(){if(picker.value!=='all'){const issue=resolveIssue();return issue?.snapshot?.parts||[]}
+const newest=new Map();for(const issue of issues){for(const part of issue.snapshot.parts||[])for(const block of part.blocks||[]){const id=block.blockId||block.id;if(id&&!newest.has(id))newest.set(id,{block,part})}}
+const sections=new Map();for(const issue of [...issues].reverse())for(const part of issue.snapshot.parts||[]){if(!sections.has(part.sectionId))sections.set(part.sectionId,{...part,blocks:[]})}
+for(const [id,{block,part}] of newest){if(!sections.has(part.sectionId))sections.set(part.sectionId,{...part,blocks:[]});sections.get(part.sectionId).blocks.push({block,id})}
+return [...sections.values()].map(part=>({...part,blocks:part.blocks.map(x=>x.block)})).filter(part=>part.blocks.length)}
+function rebuildToc(){links.replaceChildren();const headings=[...target.querySelectorAll('section > h2,section > h3')];headings.forEach((h,i)=>{h.id='section-'+(i+1);const a=add(links,'a',h.textContent,'depth'+h.tagName.slice(1));a.href='#'+h.id;a.onclick=()=>{toc.classList.remove('open');$('tocToggle').setAttribute('aria-expanded','false')}});if(!headings.length)add(links,'div','Нет видимых разделов')}
+function updateRead(){const issue=resolveIssue(),isAll=picker.value==='all';readRow.hidden=isAll;if(isAll)return;try{read.checked=localStorage.getItem('lb-read:'+file+':'+issue.id)==='yes'}catch(e){read.checked=false}}
+function render(){const layers=selectedLayers(),issue=resolveIssue();target.replaceChildren();const all=picker.value==='all';add(target,'h1',data.articleTitle||issue?.snapshot?.title||'Статья');
+let visible=0;for(const part of getParts()){const sec=document.createElement('section');let count=0;for(const block of part.blocks||[])if(renderBlock(sec,block,layers))count++;
+if(count){const title=add(sec,part.level===3?'h3':'h2',part.title);sec.prepend(title);target.appendChild(sec);visible+=count}}
+if(!visible)add(target,'p','В выбранном выпуске нет содержания в активных слоях. Включите слой «Данные» или другие слои.', 'draft-note');
+$('issueInfo').textContent=all?'Объединение '+issues.length+' выпусков без повторов блоков':(issue.title+' · '+issue.date);
+rebuildToc();updateRead();document.title=(data.articleTitle||'Статья')+' — Живая книга';
+const u=new URL(location.href);u.searchParams.set('file',file);u.searchParams.set('issue',picker.value);history.replaceState(null,'',u)}
+picker.onchange=render;for(const x of layerControls)x.onchange=render;
+read.onchange=()=>{const issue=resolveIssue();if(issue)try{localStorage.setItem('lb-read:'+file+':'+issue.id,read.checked?'yes':'no')}catch(e){}};
+$('copyLink').onclick=async()=>{const text=location.href;try{await navigator.clipboard.writeText(text);$('copyStatus').textContent='Ссылка скопирована'}catch(e){$('copyStatus').textContent='Адрес: '+text}};
+render();
+})();
+</script></body></html>
