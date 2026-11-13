@@ -1,0 +1,22 @@
+{
+  "format": "living-book-library-v1",
+  "items": [
+    {
+      "id": "novye-aes-01",
+      "title": "Новые АЭС",
+      "format": "html",
+      "file": "novye-aes-01.html",
+      "status": "test",
+      "date": "2026-11-12"
+    },
+    {
+      "id": "avtonomny-energovuzol-01",
+      "title": "Автономный энергоузел",
+      "format": "issues",
+      "file": "avtonomny-energovuzol-01.issues.json",
+      "status": "test",
+      "date": "2026-11-13",
+      "issues": 2
+    }
+  ]
+}
