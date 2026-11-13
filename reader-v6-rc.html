@@ -60,7 +60,7 @@ for(const issue of [...issues].reverse())for(const part of issue.snapshot.parts|
  if(!sections.has(current.part.sectionId))sections.set(current.part.sectionId,{...current.part,blocks:[]});
  sections.get(current.part.sectionId).blocks.push(current.block);included.add(id)}
 }
-return [...sections.values()].filter(part=>part.blocks.length)}
+return [...sections.values()].filter(part=>part.blocks.length).sort((a,b)=>(Number.isFinite(a.sectionOrder)?a.sectionOrder:Infinity)-(Number.isFinite(b.sectionOrder)?b.sectionOrder:Infinity)).map(part=>({...part,blocks:part.blocks.slice().sort((a,b)=>(Number.isFinite(a.articleOrder)?a.articleOrder:Infinity)-(Number.isFinite(b.articleOrder)?b.articleOrder:Infinity))}))}
 function rebuildToc(){links.replaceChildren();const headings=[...target.querySelectorAll('section > h2,section > h3')];headings.forEach((h,i)=>{h.id='section-'+(i+1);const a=add(links,'a',h.textContent,'depth'+h.tagName.slice(1));a.href='#'+h.id;a.onclick=()=>{toc.classList.remove('open');$('tocToggle').setAttribute('aria-expanded','false')}});if(!headings.length)add(links,'div','Нет видимых разделов')}
 function updateRead(){const issue=resolveIssue(),isAll=picker.value==='all';readRow.hidden=isAll;if(isAll)return;try{read.checked=localStorage.getItem('lb-read:'+file+':'+issue.id)==='yes'}catch(e){read.checked=false}}
 function render(){const layers=selectedLayers(),issue=resolveIssue();target.replaceChildren();const all=picker.value==='all';add(target,'h1',data.articleTitle||issue?.snapshot?.title||'Статья');
