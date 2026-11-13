@@ -1675,7 +1675,7 @@ function pubAssemblyUpdateLink(){
  const name=$('pubAssemblyFile').value.trim(),location=$('pubAssemblyLocation').value;
  const valid=/^[a-z0-9][a-z0-9_-]*$/i.test(name);
  const file=name+'.assembly.json';
- const base=new URL(location==='test'?'reader-assembly-v1-rc.html':'reader-assembly-v1-rc.html',document.baseURI);
+ const base=new URL(location==='test'?'reader-assembly-v2-rc.html':'reader-assembly-v2-rc.html',document.baseURI);
  if(valid){base.searchParams.set('file',file);base.searchParams.set('issue','all');if(location==='public')base.searchParams.set('source','public')}
  $('pubAssemblyLink').value=valid?base.href:'';
  $('pubAssemblyCopyLink').disabled=!valid;
