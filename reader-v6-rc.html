@@ -63,9 +63,10 @@ if(showMedia&&block.table){const table=add(wrapper,'table');(block.table.rows||[
 if(!block.image&&!block.table)for(const para of paras)renderText(wrapper,para.text);
 return true}
 function getParts(){if(picker.value!=='all'){const issue=resolveIssue();return issue?.snapshot?.parts||[]}
-const newest=new Map();for(const issue of issues){for(const part of issue.snapshot.parts||[])for(const block of part.blocks||[]){const id=block.blockId||block.id;if(id&&!newest.has(id))newest.set(id,{block,part})}}
+const visibleIssues=eligibleIssues();
+const newest=new Map();for(const issue of visibleIssues){for(const part of issue.snapshot.parts||[])for(const block of part.blocks||[]){const id=block.blockId||block.id;if(id&&!newest.has(id))newest.set(id,{block,part})}}
 const sections=new Map(),included=new Set();
-for(const issue of [...issues].reverse())for(const part of issue.snapshot.parts||[]){
+for(const issue of [...visibleIssues].reverse())for(const part of issue.snapshot.parts||[]){
  if(!sections.has(part.sectionId))sections.set(part.sectionId,{...part,blocks:[]});
  for(const oldBlock of part.blocks||[]){const id=oldBlock.blockId||oldBlock.id;if(!id||included.has(id))continue;const current=newest.get(id);if(!current)continue;
  if(!sections.has(current.part.sectionId))sections.set(current.part.sectionId,{...current.part,blocks:[]});
@@ -77,8 +78,8 @@ function updateRead(){const issue=resolveIssue();readRow.hidden=picker.value==='
 function render(){const layers=selectedLayers(),issue=resolveIssue();target.replaceChildren();const all=picker.value==='all';add(target,'h1',data.articleTitle||issue?.snapshot?.title||'Статья');
 let visible=0;for(const part of getParts()){const sec=document.createElement('section');let count=0;for(const block of part.blocks||[])if(renderBlock(sec,block,layers))count++;
 if(count){const title=add(sec,part.level===3?'h3':'h2',part.title);sec.prepend(title);target.appendChild(sec);visible+=count}}
-if(!visible)add(target,'p',!issue&&!all?'Все выпуски прочитаны. Сними фильтр «Скрывать прочитанные выпуски», чтобы увидеть их снова.':'В выбранном выпуске нет содержания в активных слоях. Включите соответствующие слои.', 'draft-note');
-$('issueInfo').textContent=all?'Объединение '+issues.length+' выпусков без повторов блоков':(issue?issue.title+' · '+issue.date:'Непрочитанных выпусков нет');
+if(!visible)add(target,'p',hideRead.checked&&!eligibleIssues().length?'Все выпуски прочитаны. Сними фильтр «Скрывать прочитанные выпуски», чтобы увидеть их снова.':'В выбранном выпуске нет содержания в активных слоях. Включите соответствующие слои.', 'draft-note');
+$('issueInfo').textContent=all?'Объединение '+eligibleIssues().length+' из '+issues.length+' выпусков без повторов блоков':(issue?issue.title+' · '+issue.date:'Непрочитанных выпусков нет');
 rebuildToc();updateRead();document.title=(data.articleTitle||'Статья')+' — Живая книга';
 const u=new URL(location.href);u.searchParams.set('file',file);u.searchParams.set('issue',picker.value);history.replaceState(null,'',u)}
 picker.onchange=()=>{refreshIssueOptions();render()};for(const x of layerControls)x.onchange=render;
