@@ -53,9 +53,14 @@ if(!block.image&&!block.table)for(const para of paras)renderText(wrapper,para.te
 return true}
 function getParts(){if(picker.value!=='all'){const issue=resolveIssue();return issue?.snapshot?.parts||[]}
 const newest=new Map();for(const issue of issues){for(const part of issue.snapshot.parts||[])for(const block of part.blocks||[]){const id=block.blockId||block.id;if(id&&!newest.has(id))newest.set(id,{block,part})}}
-const sections=new Map();for(const issue of [...issues].reverse())for(const part of issue.snapshot.parts||[]){if(!sections.has(part.sectionId))sections.set(part.sectionId,{...part,blocks:[]})}
-for(const [id,{block,part}] of newest){if(!sections.has(part.sectionId))sections.set(part.sectionId,{...part,blocks:[]});sections.get(part.sectionId).blocks.push({block,id})}
-return [...sections.values()].map(part=>({...part,blocks:part.blocks.map(x=>x.block)})).filter(part=>part.blocks.length)}
+const sections=new Map(),included=new Set();
+for(const issue of [...issues].reverse())for(const part of issue.snapshot.parts||[]){
+ if(!sections.has(part.sectionId))sections.set(part.sectionId,{...part,blocks:[]});
+ for(const oldBlock of part.blocks||[]){const id=oldBlock.blockId||oldBlock.id;if(!id||included.has(id))continue;const current=newest.get(id);if(!current)continue;
+ if(!sections.has(current.part.sectionId))sections.set(current.part.sectionId,{...current.part,blocks:[]});
+ sections.get(current.part.sectionId).blocks.push(current.block);included.add(id)}
+}
+return [...sections.values()].filter(part=>part.blocks.length)}
 function rebuildToc(){links.replaceChildren();const headings=[...target.querySelectorAll('section > h2,section > h3')];headings.forEach((h,i)=>{h.id='section-'+(i+1);const a=add(links,'a',h.textContent,'depth'+h.tagName.slice(1));a.href='#'+h.id;a.onclick=()=>{toc.classList.remove('open');$('tocToggle').setAttribute('aria-expanded','false')}});if(!headings.length)add(links,'div','Нет видимых разделов')}
 function updateRead(){const issue=resolveIssue(),isAll=picker.value==='all';readRow.hidden=isAll;if(isAll)return;try{read.checked=localStorage.getItem('lb-read:'+file+':'+issue.id)==='yes'}catch(e){read.checked=false}}
 function render(){const layers=selectedLayers(),issue=resolveIssue();target.replaceChildren();const all=picker.value==='all';add(target,'h1',data.articleTitle||issue?.snapshot?.title||'Статья');
