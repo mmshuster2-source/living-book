@@ -41,7 +41,7 @@ h2{font:normal 30px Georgia,serif;margin:0 0 14px}.description{color:var(--muted
   if(!resp.ok)throw Error('GitHub API: '+resp.status);
   const items=(await resp.json()).filter(x=>x.type==='file'&&/\.html?$/i.test(x.name)).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
   holder.replaceChildren();
-  if(!items.length){holder.textContent='Пока нет опубликованных HTML-статей.';holder.className='empty';return}
+  // Сборки JSON учитываются отдельно: одна запись на статью, не на выпуск.
   for(const item of items){
    const link=document.createElement('a');link.className='item';link.href='reader-v5.html?file='+encodeURIComponent(item.name);
    const arrow=document.createElement('span');arrow.className='arrow';arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');
@@ -49,10 +49,22 @@ h2{font:normal 30px Georgia,serif;margin:0 0 14px}.description{color:var(--muted
    const meta=document.createElement('div');meta.className='item-meta';meta.textContent='Открыть публикацию';
    link.append(arrow,title,meta);holder.append(link);
   }
+  const assembly=document.createElement('a');assembly.className='item';
+  assembly.href='reader-assembly-v1.html?file=avtonomny-energovuzol-01-sborka-01.assembly.json&issue=all';
+  const arrow=document.createElement('span');arrow.className='arrow';arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');
+  const heading=document.createElement('div');heading.className='item-title';heading.textContent='Автономный энергоузел';
+  const summary=document.createElement('p');summary.className='description';summary.style.cssText='margin:8px 0 0;font-size:14px';
+  summary.textContent='От покупки устройства к архитектуре решения. Концептуальное проектирование и практический кейс поликлиники.';
+  const meta=document.createElement('div');meta.className='item-meta';meta.textContent='Опубликованная сборка · 2 выпуска';
+  assembly.append(arrow,heading,summary,meta);
+  holder.append(assembly);
  }catch(e){
   holder.replaceChildren();
   const message=document.createElement('div');message.className='empty';message.textContent='Не удалось загрузить каталог. Можно открыть папку публикаций на GitHub.';
   const link=document.createElement('a');link.href='https://github.com/mmshuster2-source/living-book/tree/main/publications';link.textContent='Посмотреть публикации';message.append(document.createElement('br'),link);holder.append(message);
+  const assembly=document.createElement('a');assembly.className='item';assembly.href='reader-assembly-v1.html?file=avtonomny-energovuzol-01-sborka-01.assembly.json&issue=all';
+  const title=document.createElement('div');title.className='item-title';title.textContent='Автономный энергоузел';
+  assembly.append(title);holder.append(assembly);
  }
 })();
 </script></body></html>
