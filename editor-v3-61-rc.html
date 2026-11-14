@@ -1511,9 +1511,10 @@ window.addEventListener('message',event=>{
  }
 });
 function makeLocalReaderSnapshot(){
- const oldMode=readerMode;
+ const oldMode=readerMode,oldLayers=contentLayerFilter;
  try{
   readerMode=true;
+  contentLayerFilter=new Set(layerItems.map(([id])=>id));
   renderArticle();
   const node=$('article').cloneNode(true);
   node.querySelectorAll('.paragraph-review-links,.placeholder-inline,.omit-marker,.empty-paragraph-hint,.block-status').forEach(el=>el.remove());
@@ -1527,6 +1528,7 @@ function makeLocalReaderSnapshot(){
   return {title:data.title,html:node.innerHTML};
  }finally{
   readerMode=oldMode;
+  contentLayerFilter=oldLayers;
   renderArticle();
  }
 }
