@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Читатель — просмотр статьи · Живая книга</title><link rel="stylesheet" href="reader-style-v4.css">
+<style>
+.preview-return{font:13px system-ui,sans-serif;border:1px solid #cad4d3;background:white;color:#2d505d;border-radius:5px;padding:7px 10px;cursor:pointer}
+.preview-label{font:12px system-ui,sans-serif;color:#667277;padding:9px 22px;border-bottom:1px solid #dce0df}
+.reader-layout{grid-template-columns:minmax(175px,230px) minmax(0,760px) minmax(170px,210px);column-gap:24px;max-width:1500px}
+.reader-side{align-self:start;border-left:1px solid #dce0df;padding:10px 15px;position:sticky;top:15px;font:13px system-ui,sans-serif}
+.reader-side label{display:block;margin:12px 0}.reader-side h2{font:600 14px system-ui,sans-serif;margin:4px 0 16px}
+.reader-main article h1{font-family:Georgia,serif}.reader-main article p{white-space:normal}
+.reader-main article .lb-text-line,.reader-main article .lb-list-line{display:block;min-height:1em}
+.reader-main article .lb-list-line{padding-left:1.4em;text-indent:-1.4em}
+.reader-main article .lb-data-table{border-collapse:collapse;width:100%}
+.reader-main article .lb-data-table td,.reader-main article .lb-data-table th{border:1px solid #d0d7d6;padding:7px}
+.reader-main article .lb-image img{max-width:100%;height:auto}
+.reader-main article .lb-image-caption{display:block;text-align:center;font-size:13px;color:#687477}
+.reader-main article .lb-image-paragraph{border:0}
+.toc a.depth3{padding-left:12px}
+@media(max-width:900px){.reader-layout{grid-template-columns:170px minmax(0,1fr)}.reader-side{grid-column:1/-1;position:static;border-left:0;border-top:1px solid #dce0df;display:flex;gap:16px;flex-wrap:wrap}}
+@media(max-width:650px){.reader-layout{display:block;padding:15px}.reader-side{display:block}.reader-main{max-width:100%}}
+</style></head>
+<body data-density="normal">
+<header class="site-head"><strong>Живая книга</strong><div class="reader-controls">
+<button class="preview-return" id="back">← Вернуться к редактированию</button>
+<label for="density">Текст</label><select id="density"><option value="compact">Компактно</option><option value="normal">Обычно</option><option value="spacious">Просторно</option></select>
+</div></header>
+<div class="preview-label" id="status">Локальный просмотр текущей статьи. Не опубликовано.</div>
+<div class="reader-layout"><button type="button" class="toc-toggle" id="tocToggle" aria-expanded="false">Оглавление</button>
+<nav id="toc" class="toc" aria-label="Оглавление"><div class="toc-heading">Содержание</div><div id="tocLinks"></div></nav>
+<main class="reader-main"><article id="reading"><p>Ожидание статьи из редактора…</p></article></main>
+<aside class="reader-side"><div><h2>Слои</h2><label><input type="checkbox" data-layer="popular" checked> Основное</label><label><input type="checkbox" data-layer="detail" checked> Детали</label><label><input type="checkbox" data-layer="example" checked> Примеры</label><label><input type="checkbox" data-layer="data" checked> Данные</label></div></aside></div>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id),target=$('reading'),toc=$('toc'),links=$('tocLinks');
+const parentOrigin=location.origin;
+$('back').onclick=()=>{
+ if(window.opener&&!window.opener.closed){
+  window.opener.postMessage({type:'lb-preview-return-v1'},parentOrigin);
+  window.opener.focus();
+  window.close();
+ }
+ if(!window.closed){$('status').textContent='Вернись в открытую вкладку редактора.'}
+};
+$('tocToggle').onclick=()=>{const open=toc.classList.toggle('open');$('tocToggle').setAttribute('aria-expanded',String(open))};
+const density=$('density'),options=['compact','normal','spacious'];
+try{const stored=localStorage.getItem('living-book-reader-density');if(options.includes(stored))density.value=stored}catch(e){}
+document.body.dataset.density=density.value;
+density.onchange=()=>{document.body.dataset.density=density.value;try{localStorage.setItem('living-book-reader-density',density.value)}catch(e){}};
+const layers=[...document.querySelectorAll('[data-layer]')];
+const canonical=x=>({popular:'popular',details:'detail',detail:'detail',examples:'example',example:'example',data:'data'}[x]||'popular');
+function applyLayers(){const selected=new Set(layers.filter(x=>x.checked).map(x=>x.dataset.layer));target.querySelectorAll('[data-content-layer]').forEach(x=>x.hidden=!selected.has(canonical(x.dataset.contentLayer)))}
+layers.forEach(x=>x.onchange=applyLayers);
+function setContents(markup,title){
+ const doc=new DOMParser().parseFromString('<main>'+markup+'</main>','text/html');
+ doc.querySelectorAll('script,style,iframe,object,embed,form,link,meta,base').forEach(x=>x.remove());
+ for(const el of doc.querySelectorAll('*')){
+  for(const attr of [...el.attributes])if(/^on/i.test(attr.name)||['srcdoc','contenteditable'].includes(attr.name))el.removeAttribute(attr.name);
+  for(const name of ['href','src'])if(el.hasAttribute(name)&&/^javascript:/i.test(el.getAttribute(name).trim()))el.removeAttribute(name);
+ }
+ const fragment=document.createDocumentFragment();
+ [...doc.body.querySelector('main').children].forEach(el=>fragment.appendChild(document.importNode(el,true)));
+ target.replaceChildren(fragment);
+ document.title=(title||'Статья')+' — просмотр · Живая книга';
+ links.replaceChildren();
+ [...target.querySelectorAll('h2,h3')].forEach((h,i)=>{
+  h.id='preview-chapter-'+(i+1);
+  const a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent.trim();
+  a.className=h.tagName==='H3'?'depth3':'';a.onclick=()=>{toc.classList.remove('open');$('tocToggle').setAttribute('aria-expanded','false')};
+  links.appendChild(a);
+ });
+ if(!links.children.length)links.textContent='Разделов пока нет';
+ applyLayers();
+ $('status').textContent='Просмотр текущей статьи. Не опубликовано.';
+}
+window.addEventListener('message',e=>{
+ if(e.origin!==parentOrigin||e.source!==window.opener||e.data?.type!=='lb-preview-snapshot-v1')return;
+ if(typeof e.data.html!=='string'||e.data.html.length>10000000)return;
+ setContents(e.data.html,String(e.data.title||''));
+});
+if(!window.opener){$('status').textContent='Открой просмотр кнопкой «Читатель» в редакторе.';return}
+window.opener.postMessage({type:'lb-preview-ready-v1'},parentOrigin);
+})();
+</script></body></html>
