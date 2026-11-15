@@ -17,6 +17,7 @@
 .reader-main article .lb-data-table{border-collapse:collapse;width:100%!important;max-width:100%;table-layout:auto!important;margin:12px 0 22px}
 .reader-main article .lb-data-table td,.reader-main article .lb-data-table th{overflow-wrap:anywhere;white-space:normal;min-width:0}
 .reader-main article .lb-table-container:hover{background:transparent}
+.reader-main article [hidden]{display:none!important}
 .reader-main article .lb-data-table td,.reader-main article .lb-data-table th{border:1px solid #d0d7d6;padding:7px}
 .reader-main article .lb-image img{max-width:100%;height:auto}
 .reader-main article .lb-image-caption{display:block;text-align:center;font-size:13px;color:#687477}
@@ -69,7 +70,7 @@ function setContents(markup,title){
  target.replaceChildren(fragment);
  document.title=(title||'Статья')+' — просмотр · Живая книга';
  links.replaceChildren();
- [...target.querySelectorAll('h2,h3')].forEach((h,i)=>{
+ [...target.querySelectorAll('h2,h3')].filter(h=>!h.hidden).forEach((h,i)=>{
   h.id='preview-chapter-'+(i+1);
   const a=document.createElement('a');a.href='#'+h.id;a.textContent=h.textContent.trim();
   a.className=h.tagName==='H3'?'depth3':'';a.onclick=()=>{toc.classList.remove('open');$('tocToggle').setAttribute('aria-expanded','false')};
