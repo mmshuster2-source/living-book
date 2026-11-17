@@ -10,7 +10,7 @@
 .reader-side small{display:block;color:var(--muted);margin-top:9px}.reader-main article .draft-note{font:14px system-ui,sans-serif;color:var(--muted)}
 .reader-main article .lb-content-block{margin-bottom:15px}.reader-main article .lb-content-block>h3{margin-top:20px}
 .reader-main article .lb-content-block p{white-space:normal}.reader-main article .lb-content-block .list-line{display:block;padding-left:1.4em;text-indent:-1.4em}
-.reader-main article .lb-content-block .line{display:block}.toc a.depth3{padding-left:12px}.toc a.depth4{padding-left:24px;font-size:12px;color:#667277}.toc-heading{margin-bottom:9px}
+.reader-main article .lb-content-block .line{display:block}.reader-main article .lb-content-block .list-continuation{display:block;padding-left:1.4em}.toc a.depth3{padding-left:12px}.toc a.depth4{padding-left:24px;font-size:12px;color:#667277}.toc-heading{margin-bottom:9px}
 #copyStatus{min-height:20px;color:var(--muted)}.rc-label{font:11px system-ui,sans-serif;color:var(--muted);margin-left:8px}
 @media(max-width:1080px){.reader-layout{grid-template-columns:170px minmax(0,1fr) 175px;column-gap:18px}.reader-side{display:block}}
 @media(max-width:790px){.reader-layout{display:flex;flex-direction:column;padding:18px 18px 70px;gap:12px}.reader-side{order:0;position:static;max-height:none;overflow:visible;border:1px solid var(--line);padding:12px;width:100%}.reader-main{order:1}.toc-toggle{order:2}.toc{order:3;width:100%}.reader-side section{margin-bottom:8px;padding-bottom:10px}.reader-side section.layers{display:flex;flex-wrap:wrap;gap:0 14px}.reader-side section.layers h2{width:100%}.reader-side .layer-row{width:45%}}
@@ -50,12 +50,34 @@ function refreshIssueOptions(){
  for(const option of [...picker.options])if(option.value!=='latest'&&option.value!=='all')option.remove();
  for(const item of issues){if(hideRead.checked&&wasRead(item)&&item.id!==selected)continue;
   const option=document.createElement('option');option.value=item.id;option.textContent=(item.shortTitle||item.title)+' · '+item.date;picker.appendChild(option)}
- if(![...picker.options].some(o=>o.value===selected))picker.value='latest';
+ // Removing the selected <option> resets the select to its first option.
+ // Always restore the captured choice after rebuilding the list.
+ picker.value=[...picker.options].some(o=>o.value===selected)?selected:'latest';
 }
 const canonicalLayer=l=>({popular:'popular',detail:'detail',details:'detail',example:'example',examples:'example',data:'data'}[l]||'popular');
 function resolveIssue(){return picker.value==='latest'?eligibleIssues()[0]:issues.find(i=>i.id===picker.value)}
 function add(parent,tag,value,cls){const el=document.createElement(tag);if(value!=null)el.textContent=String(value);if(cls)el.className=cls;parent.appendChild(el);return el}
-function renderText(parent,value){const chunks=String(value||'').split(/\n\s*\n/);for(const chunk of chunks){if(!chunk.trim())continue;const p=add(parent,'p');const lines=chunk.split('\n');lines.forEach((line,idx)=>{if(idx)p.appendChild(document.createTextNode('\n'));const span=add(p,'span',null,/^\s*(?:[-•]|\d+[.)]|[IVX]+\.)\s/.test(line)?'list-line':'line');const bold=line.split(/(\*\*[^*]+\*\*)/);for(const part of bold){if(part.startsWith('**')&&part.endsWith('**'))add(span,'strong',part.slice(2,-2));else span.appendChild(document.createTextNode(part))}})}}
+function renderText(parent,value){
+ const chunks=String(value||'').split(/\n\s*\n/);
+ for(const chunk of chunks){
+  if(!chunk.trim())continue;
+  const p=add(parent,'p');const lines=chunk.split('\n');let inList=false;
+  lines.forEach(line=>{
+   const bullet=line.match(/^\s*[-•]\s*(\S.*)$/)||line.match(/^\s*\*\s+(.+)$/);
+   const number=line.match(/^\s*(\d+[.)]|[IVX]+\.)\s+(.+)$/);
+   let content=line,cls='line',marker='';
+   if(bullet){cls='list-line';marker='• ';content=bullet[1];inList=true}
+   else if(number){cls='list-line';marker=number[1]+' ';content=number[2];inList=true}
+   else if(inList){cls='list-continuation'}
+   const span=add(p,'span',null,cls);
+   if(marker)span.appendChild(document.createTextNode(marker));
+   for(const part of content.split(/(\*\*[^*]+\*\*)/)){
+    if(part.startsWith('**')&&part.endsWith('**'))add(span,'strong',part.slice(2,-2));
+    else span.appendChild(document.createTextNode(part))
+   }
+  })
+ }
+}
 function renderBlock(section,block,layers){const blockLayer=canonicalLayer(block.layer);const paras=(block.paragraphs||[]).filter(p=>layers.has(canonicalLayer(p.layer||blockLayer)));const showMedia=layers.has(blockLayer);if(!paras.length&&!(showMedia&&(block.image||block.table)))return false;
 const wrapper=add(section,'div',null,'lb-content-block');if(block.showHeading&&!block.subblock)add(wrapper,'h3',block.name);
 if(showMedia&&block.image?.src){const fig=add(wrapper,'figure'),im=add(fig,'img');im.src=block.image.src;im.alt=block.image.alt||'';if(block.image.caption)add(fig,'figcaption',block.image.caption)}
