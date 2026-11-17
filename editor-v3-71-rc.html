@@ -1807,14 +1807,15 @@ $('issuePassportSave').onclick=()=>{
 /* Shared issue catalogue state. A removed issue retains its immutable snapshot
    in the article, but is excluded from both dialogues and future assemblies. */
 function syncIssueVisibility(id,hidden){
- const stored=new Set([...(issueView.hidden||[]),...pubAssemblyHidden]);
+ const sameAssembly=pubAssemblySource===data;
+ const stored=new Set([...(issueView.hidden||[]),...(sameAssembly?[...pubAssemblyHidden]:[])]);
  const assemblyHidden=new Set(stored);
  if(hidden){stored.add(id);assemblyHidden.add(id);pubAssemblySelected.delete(id)}
  else{stored.delete(id);assemblyHidden.delete(id)}
  issueView.hidden=[...stored];
- pubAssemblyHidden=assemblyHidden;
+ if(sameAssembly)pubAssemblyHidden=assemblyHidden;
  saveIssueView();
- try{localStorage.setItem(pubAssemblyKey(currentArticleId),JSON.stringify([...assemblyHidden]))}catch(error){}
+ try{localStorage.setItem(pubAssemblyKey(currentArticleId),JSON.stringify([...stored]))}catch(error){}
  if(issuesDlg.open)renderIssueHistory();
  if(pubAssemblyDialog.open&&pubAssemblySource===data)pubAssemblyRender()
 }
@@ -1823,12 +1824,11 @@ function removeIssueFromCatalogue(issue){
  if(!confirm('Удалить выпуск «'+(issue.shortTitle||issue.title)+'» из доступных списков без возможности возврата через интерфейс? Снимок останется в JSON статьи. Уже опубликованные файлы не изменятся.'))return;
  issue.uiRemoved=true;
  if(!save()){delete issue.uiRemoved;return}
- pubAssemblySelected.delete(issue.id);
- pubAssemblyHidden.delete(issue.id);
+ if(pubAssemblySource===data){pubAssemblySelected.delete(issue.id);pubAssemblyHidden.delete(issue.id)}
  issueView.hidden=issueView.hidden.filter(id=>id!==issue.id);
  issueView.order=issueView.order.filter(id=>id!==issue.id);
  saveIssueView();
- try{localStorage.setItem(pubAssemblyKey(currentArticleId),JSON.stringify([...pubAssemblyHidden]))}catch(error){}
+ try{localStorage.setItem(pubAssemblyKey(currentArticleId),JSON.stringify(issueView.hidden))}catch(error){}
  if(issuesDlg.open)renderIssueHistory();
  if(pubAssemblyDialog.open&&pubAssemblySource===data)pubAssemblyRender()
 }
