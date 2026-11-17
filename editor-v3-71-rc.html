@@ -1807,8 +1807,8 @@ $('issuePassportSave').onclick=()=>{
 /* Shared issue catalogue state. A removed issue retains its immutable snapshot
    in the article, but is excluded from both dialogues and future assemblies. */
 function syncIssueVisibility(id,hidden){
- const stored=new Set(issueView.hidden||[]);
- const assemblyHidden=new Set(pubAssemblyHidden);
+ const stored=new Set([...(issueView.hidden||[]),...pubAssemblyHidden]);
+ const assemblyHidden=new Set(stored);
  if(hidden){stored.add(id);assemblyHidden.add(id);pubAssemblySelected.delete(id)}
  else{stored.delete(id);assemblyHidden.delete(id)}
  issueView.hidden=[...stored];
