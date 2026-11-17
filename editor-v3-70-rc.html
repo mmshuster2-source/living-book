@@ -1737,20 +1737,72 @@ function pubAssemblySelectArticle(){
  pubAssemblyRender()
 }
 
-function pubAssemblyUpdateIssue(issue){
- if(pubAssemblyArticleId!==currentArticleId||pubAssemblySource!==data)return alert('Для изменения метаданных открой соответствующую статью в авторском редакторе.');
- const shortTitle=prompt('Краткое название выпуска:',issue.shortTitle||issue.title||'');
- if(shortTitle===null)return;
- const title=prompt('Полное название выпуска:',issue.title||'');
- if(title===null)return;
- const comment=prompt('Комментарий автора (не изменяет снимок):',issue.comment||'');
- if(comment===null)return;
- if(!shortTitle.trim()||!title.trim())return alert('Название не может быть пустым.');
- const before={shortTitle:issue.shortTitle,title:issue.title,comment:issue.comment};
- issue.shortTitle=shortTitle.trim();issue.title=title.trim();issue.comment=comment.trim();
- if(!save()){Object.assign(issue,before);return}
- pubAssemblyRender()
+
+/* Read-only inspection of the exact historical snapshot, including hidden issues. */
+const issueViewerDlg=document.createElement('dialog');
+issueViewerDlg.id='issueViewerDialog';
+issueViewerDlg.style.cssText='width:min(860px,96vw);max-height:88vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--bg);color:var(--ink)';
+issueViewerDlg.innerHTML='<div class="row" style="justify-content:space-between;align-items:center"><h2>Содержание выпуска</h2><button class="btn" type="button" id="issueViewerClose">Закрыть</button></div><div id="issueViewerBody"></div>';
+document.body.appendChild(issueViewerDlg);
+$('issueViewerClose').onclick=()=>issueViewerDlg.close();
+function pubAssemblyShowIssue(issue){
+ const host=$('issueViewerBody');host.replaceChildren();
+ const add=(tag,txt,parent=host)=>{
+  const el=document.createElement(tag);el.textContent=String(txt||'');parent.append(el);return el
+ };
+ add('h3',issue.title||issue.shortTitle||'Без названия');
+ add('p','ID: '+issue.id+' · '+pubAssemblyDate(issue));
+ if(issue.comment)add('p','Комментарий автора: '+issue.comment);
+ const parts=issue.snapshot?.parts||[];
+ let count=0;
+ for(const part of parts){
+  add('h3',part.title||'Без названия');
+  for(const block of part.blocks||[]){
+   const box=add('section','');box.className='box';box.style.cssText='padding:12px;margin:9px 0';
+   add('strong',(block.name||block.blockId||block.id||'Блок')+' · '+(block.blockId||block.id||''),box);
+   for(const para of block.paragraphs||[]){
+    const p=add('p',para.text||'',box);p.style.whiteSpace='pre-wrap';p.style.margin='8px 0';
+    count++
+   }
+   if(block.image?.src){const p=add('p','Иллюстрация: '+(block.image.caption||block.image.alt||block.image.src),box);p.className='small'}
+   if(block.table?.rows){add('p','Таблица: '+block.table.rows.length+' строк',box)}
+  }
+ }
+ if(!parts.length)add('p','В снимке нет разделов.');
+ add('p','Абзацев в снимке: '+count+' · только чтение');
+ issueViewerDlg.showModal()
 }
+const issuePassportDlg=document.createElement('dialog');
+issuePassportDlg.id='issuePassportDialog';
+issuePassportDlg.style.cssText='width:min(620px,95vw);max-height:85vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:20px;background:var(--bg);color:var(--ink)';
+issuePassportDlg.innerHTML='<h2>Паспорт выпуска</h2>'+
+ '<label class="field">Полное название<input id="issuePassportTitle"></label>'+
+ '<label class="field">Краткое название<input id="issuePassportShort"></label>'+
+ '<label class="field">Комментарий автора<textarea id="issuePassportComment" rows="4"></textarea></label>'+
+ '<p class="msg">Изменяется только паспорт. Снимок текста и состав блоков остаются неизменными.</p>'+
+ '<div class="actions"><button class="btn primary" type="button" id="issuePassportSave">Сохранить</button>'+
+ '<button class="btn" type="button" id="issuePassportCancel">Отмена</button></div>';
+document.body.appendChild(issuePassportDlg);
+let passportIssue=null;
+$('issuePassportCancel').onclick=()=>issuePassportDlg.close();
+function pubAssemblyUpdateIssue(issue){
+ if(pubAssemblyArticleId!==currentArticleId||pubAssemblySource!==data)return alert('Для изменения паспорта открой соответствующую статью в авторском редакторе.');
+ passportIssue=issue;
+ $('issuePassportTitle').value=issue.title||'';
+ $('issuePassportShort').value=issue.shortTitle||issue.title||'';
+ $('issuePassportComment').value=issue.comment||'';
+ issuePassportDlg.showModal()
+}
+$('issuePassportSave').onclick=()=>{
+ const issue=passportIssue;
+ if(!issue)return;
+ const title=$('issuePassportTitle').value.trim(),shortTitle=$('issuePassportShort').value.trim(),comment=$('issuePassportComment').value.trim();
+ if(!title||!shortTitle)return alert('Укажи полное и краткое названия.');
+ const before={title:issue.title,shortTitle:issue.shortTitle,comment:issue.comment};
+ issue.title=title;issue.shortTitle=shortTitle;issue.comment=comment;
+ if(!save()){Object.assign(issue,before);return}
+ passportIssue=null;issuePassportDlg.close();pubAssemblyRender()
+};
 function pubAssemblyRemoveIssue(issue){
  if(pubAssemblyArticleId!==currentArticleId||pubAssemblySource!==data)return alert('Чтобы исключить выпуск, открой его статью в редакторе.');
  if(!confirm('Удалить выпуск «'+(issue.shortTitle||issue.title)+'» из доступных списков без возможности возврата через интерфейс? Снимок останется в JSON статьи. Уже опубликованные файлы не изменятся.'))return;
@@ -1776,6 +1828,7 @@ function pubAssemblyRender(){
   const meta=document.createElement('div');meta.className='msg';meta.textContent=pubAssemblyDate(issue)+' · '+(issue.title||'Без названия');
   info.append(title,meta);
   if(issue.comment){const note=document.createElement('div');note.className='small';note.textContent='Комментарий: '+issue.comment;info.append(note)}
+  const preview=document.createElement('button');preview.className='btn';preview.type='button';preview.textContent='Показать';preview.onclick=()=>pubAssemblyShowIssue(issue);
   const edit=document.createElement('button');edit.className='btn';edit.type='button';edit.textContent='Паспорт…';edit.onclick=()=>pubAssemblyUpdateIssue(issue);
   const remove=document.createElement('button');remove.className='btn';remove.type='button';remove.textContent='Удалить';remove.onclick=()=>pubAssemblyRemoveIssue(issue);
   const toggle=document.createElement('button');toggle.className='btn';toggle.type='button';toggle.textContent=hidden?'Вернуть':'Скрыть';
@@ -1784,7 +1837,7 @@ function pubAssemblyRender(){
    try{localStorage.setItem(pubAssemblyKey(pubAssemblyArticleId),JSON.stringify([...pubAssemblyHidden]))}catch(e){}
    pubAssemblyRender()
   };
-  line.append(check,info,toggle,edit,remove);host.append(line)
+  line.append(check,info,preview,toggle,edit,remove);host.append(line)
  }
  if(!host.children.length){const empty=document.createElement('p');empty.className='msg';empty.textContent=issues.length?'Все выпуски скрыты. Включи «Показывать скрытые».':'У статьи ещё нет выпусков. Создай их через «Выпуски».';host.append(empty)}
  pubAssemblyRefresh()
