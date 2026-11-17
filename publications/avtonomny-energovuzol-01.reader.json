@@ -1,0 +1,19 @@
+{
+  "format": "living-book-reader-catalog-v1",
+  "id": "avtonomny-energovuzol-01",
+  "articleTitle": "Автономный энергоузел",
+  "assemblies": [
+    {
+      "id": "avtonomny-energovuzol-01-sborka-01",
+      "file": "avtonomny-energovuzol-01-sborka-01.assembly.json",
+      "date": "2026-11-13",
+      "title": "Выпуск от 13 ноября"
+    },
+    {
+      "id": "avtonomny-energovuzol-01-sborka-2026-11-17",
+      "file": "avtonomny-energovuzol-01-sborka-2026-11-17.assembly.json",
+      "date": "2026-11-17",
+      "title": "Выпуск от 17 ноября"
+    }
+  ]
+}
